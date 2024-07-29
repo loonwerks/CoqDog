@@ -16,6 +16,7 @@ repair using the Coq theorem prover.
 
 – Developing a sound recommendation system supported by a ranking
 mechanism to prevent logically unsound recommendations.
+
 – Establishing effective metrics for measuring proof repair progress.
 
 – Designing a statistically robust evaluation system for assessing conversational quality; Figure 5 (AISOLA2024 paper).
