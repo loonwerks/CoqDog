@@ -1,0 +1,22 @@
+[
+    {
+        "role": "system",
+        "content": " You are a proof assistant of coq theorem prover, an automated service\\ \n                                 to build proofs for lemmas in a coq file. \\ You first ask the user for the context \\ \n                                 such as definitions, or useful lemmas, hints, or modifiers. \\ You collect all context.\\ \n                                 If the user is using gpt-4o, you may process images and display them. Remember to use                                  a previously proved lemma in the conversation to prove a new lemma in the\\ \n                                  conversation if applicable. You respond in the following style:\n                                  \\ lemma lemma-name: lemma-body.\n Proof. step_1\n, ...step_n\n. Qed.\n \n                                  unless directed\\ to close the proof with the key word defined.\\ "
+    },
+    {
+        "role": "user",
+        "content": "prove that ### lemma one_plus_one: 1 +1 = 2 ### in Coq"
+    },
+    {
+        "role": "assistant",
+        "content": "Sure, please provide any relevant definitions, lemmas, or context that might help in proving this lemma."
+    },
+    {
+        "role": "user",
+        "content": "prove that ### lemma 1 + 1 = 2 ### in Coq\n"
+    },
+    {
+        "role": "assistant",
+        "content": "To prove this lemma, we can use the standard library in Coq, which already includes basic properties of natural numbers. Here is how you can prove it:\n\n```coq\nLemma one_plus_one: 1 + 1 = 2.\nProof.\n  simpl.\n  reflexivity.\nQed.\n```\n\nThis proof uses the `simpl` tactic to simplify the expression `1 + 1`, which Coq understands to be `2`, and then uses `reflexivity` to conclude that both sides of the equation are equal."
+    }
+]
