@@ -48,15 +48,27 @@ Make sure you have the following installed:
    
 2. **Set Up a Virtual Environment**
   ```bash 
-   python3 -m venv venv
+   python3.9 -m venv venv
    source venv/bin/activate
    
-3. **Set Up Environment Variables** 
+3. **Install Dependencies**
    ```bash
-   Open your `.env` file and add the following line and save file after that. 
-   Be sure to replace `your-openai-api-key` with your actual key:
+   pip3.9 install -r requirements.txt
+
+4. **Set Up Environment Variables** 
+   Open your `.env` file 
+   ```bash
+   gedit .env
    
+   add the following line and save file after that. 
+    
    OPENAI_API_KEY="your-openai-api-key"
+    
+   be sure to replace `your-openai-api-key` with your actual key.
+      
    
-4.   
+5. **Run CoqDog Team Application**
+   ```bash
+     python3.9 CoqDog_Team.py
+      
      
