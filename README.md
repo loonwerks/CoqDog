@@ -65,10 +65,12 @@ Make sure you have the following installed:
    OPENAI_API_KEY="your-openai-api-key"
     
    be sure to replace `your-openai-api-key` with your actual key.
-      
-   
+    
 5. **Run CoqDog Team Application**
    ```bash
      python3.9 CoqDog_Team.py
-      
+
+### Video Demo
+
+[![Watch the video](https://img.youtube.com/vi/dSQY-Tf28QE/maxresdefault.jpg)](https://youtu.be/dSQY-Tf28QE)       
      
