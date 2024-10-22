@@ -71,6 +71,6 @@ Make sure you have the following installed:
      python3.9 CoqDog_Team.py
 
 ### Video Demo
-
-[![Watch the video](https://img.youtube.com/vi/dSQY-Tf28QE/maxresdefault.jpg)](https://youtu.be/dSQY-Tf28QE)       
+[![Watch the video](https://img.youtube.com/vi/dSQY-Tf28QE/hqdefault.jpg)](https://youtu.be/dSQY-Tf28QE)
+ 
      
