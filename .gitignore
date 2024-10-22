@@ -4,6 +4,7 @@ __pycache__/
 .env
 .DS_Store
 copland-src-compiled_1/
+temp_history/
 src/
 src.zip
 uploaded_dir/
