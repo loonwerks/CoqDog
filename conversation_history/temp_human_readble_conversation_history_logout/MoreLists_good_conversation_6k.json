@@ -1,0 +1,133 @@
+[
+    {
+        "lemma-name": "firstn_append",
+        "proof-shots": [
+            "induction l as [| a l IH]; intros l'.\n- simpl. reflexivity.\n- simpl. rewrite IH. reflexivity."
+        ]
+    },
+    {
+        "lemma-name": "skipn_append",
+        "proof-shots": [
+            "induction l as [| a l IH]; intros l'.\n- simpl. reflexivity.\n- simpl. apply IH."
+        ]
+    },
+    {
+        "lemma-name": "skipn_all",
+        "proof-shots": [
+            "induction l as [| a l IH].\n- simpl. reflexivity.\n- simpl. apply IH."
+        ]
+    },
+    {
+        "lemma-name": "skipn_nil",
+        "proof-shots": [
+            "induction i as [| i IH].\n- simpl. reflexivity.\n- simpl. apply IH."
+        ]
+    },
+    {
+        "lemma-name": "firstn_all_n",
+        "proof-shots": [
+            "intros l n H.\nrevert l H.\ninduction n as [| n IH]; intros l H.\n- destruct l.\n+ simpl. reflexivity.\n+ simpl in H. lia.\n- destruct l.\n+ simpl. reflexivity.\n+ simpl. f_equal. apply IH. simpl in H. lia."
+        ]
+    },
+    {
+        "lemma-name": "skipn_all_n",
+        "proof-shots": [
+            "intros l n H.\nrevert l H.\ninduction n as [| n IH]; intros l H.\n- destruct l.\n+ simpl. reflexivity.\n+ simpl in H. lia.\n- destruct l.\n+ simpl. reflexivity.\n+ simpl. apply IH. simpl in H. lia."
+        ]
+    },
+    {
+        "lemma-name": "firstn_in",
+        "proof-shots": [
+            "induction i as [| i IH]; intros l H.\n- simpl in H. contradiction.\n- destruct l as [| a l].\n+ simpl in H. contradiction.\n+ simpl in H. simpl. destruct H as [H|H].\n* left. assumption.\n* right. apply IH. assumption.",
+            "induction i as [| i IH]; intros l H.\n- simpl in H. exact H.\n- destruct l as [| a l].\n+ simpl in H. contradiction.\n+ simpl in *. auto."
+        ]
+    },
+    {
+        "lemma-name": "skipn_in",
+        "proof-shots": [
+            "induction i as [| i IH]; intros l H.\n- simpl in H. exact H.\n- destruct l as [| a l].\n+ simpl in H. contradiction.\n+ simpl in H. right. apply IH. assumption."
+        ]
+    },
+    {
+        "lemma-name": "skipn_zero",
+        "proof-shots": [
+            "intros l.\nsimpl.\nreflexivity."
+        ]
+    },
+    {
+        "lemma-name": "in_skipn_cons",
+        "proof-shots": [
+            "intros i x y l H.\ndestruct i as [| i].\n- simpl. right. assumption.\n- simpl. assumption.",
+            "induction i as [| i IH]; intros x y l H.\n- simpl. right. assumption.\n- destruct l as [| a l].\n+ simpl in *. contradiction.\n+ simpl in *. apply IH in H. assumption.",
+            "induction i as [| i IH]; intros x y l H.\n- simpl. right. assumption.\n- destruct l as [| a l].\n+ simpl in *. contradiction.\n+ simpl in *. auto."
+        ]
+    },
+    {
+        "lemma-name": "nodup_append",
+        "proof-shots": [
+            "induction l as [| a l IH]; intros l' Hnodup_l Hnodup_l' Hdisjoint.\n- simpl. assumption.\n- apply NoDup_cons in Hnodup_l. destruct Hnodup_l as [Hnotin_l Ha_nodup].\nsimpl. apply NoDup_cons.\nsplit.\n+ rewrite in_app_iff. intro H. destruct H as [H|H].\n* contradiction.\n* apply (Hdisjoint a); simpl; auto.\n+ apply IH; auto.\nintros x Hxl Hx_l'. apply (Hdisjoint x); auto.",
+            "induction l as [| a l IH]; intros l' Hnodup_l Hnodup_l' Hdisjoint.\n- simpl. assumption.\n- destruct Hnodup_l. simpl. apply NoDup_cons.\nsplit.\n+ rewrite in_app_iff. intro H. destruct H as [H|H].\n* contradiction.\n* apply (Hdisjoint a); simpl; auto.\n+ apply IH; auto.\nintros x Hxl Hx_l'. apply (Hdisjoint x); auto."
+        ]
+    },
+    {
+        "lemma-name": "in_cons_app_cons",
+        "proof-shots": [
+            "intros x y z l.\nsimpl. rewrite in_app_iff. simpl.\nsplit; intros H; decompose [or] H; auto.",
+            "intros x y z l. rewrite app_comm_cons.\nrewrite in_app_iff. simpl.\nsplit; intros H; decompose [or] H; auto.",
+            "intros. rewrite app_comm_cons.\nrewrite in_app_iff; simpl.\nsplit; intros H; decompose [or] H; auto.\nintuition."
+        ]
+    },
+    {
+        "lemma-name": "earlier_in_left",
+        "proof-shots": [
+            "intros l x y H.\ndestruct H as [n [Hx _]].\napply firstn_in in Hx.\nassumption."
+        ]
+    },
+    {
+        "lemma-name": "earlier_in_right",
+        "proof-shots": [
+            "intros l x y H.\ndestruct H as [n [_ Hy]].\napply skipn_in in Hy.\nassumption."
+        ]
+    },
+    {
+        "lemma-name": "earlier_left",
+        "proof-shots": [
+            "intros p q x y [n [Hx Hy]].\nexists n. split.\n- rewrite firstn_app. apply in_or_app. left. assumption.\n- rewrite skipn_app.\ndestruct (le_lt_dec (length p) n).\n+ rewrite firstn_all; auto. simpl. assumption.\n+ rewrite firstn_exact_length; auto.",
+            "intros p q x y [n [Hx Hy]].\nexists n. split.\n- rewrite firstn_app. apply in_or_app. left. assumption.\n- rewrite skipn_app. apply in_or_app. left; auto."
+        ]
+    },
+    {
+        "lemma-name": "earlier_right",
+        "proof-shots": [
+            "intros p q x y [n [Hx Hy]].\nexists (length p + n). split.\n- rewrite firstn_app. apply in_or_app. right. rewrite firstn_all_n; auto.\n- rewrite skipn_app. apply in_or_app. right. rewrite <- minus_n_n. assumption.",
+            "intros p q x y [i [Hx Hy]].\nexists (length p + i).\nassert (G: length p + i - length p = i).\nlia.\nsplit.\n- rewrite firstn_app. apply in_or_app. right. rewrite G. assumption.\n- rewrite skipn_app. apply in_or_app. right. rewrite G. assumption."
+        ]
+    },
+    {
+        "lemma-name": "earlier_append",
+        "proof-shots": [
+            "intros p q x y Hx Hy.\nexists (length p).\nsplit.\n- rewrite firstn_app. apply in_or_app. left. assumption.\n- rewrite skipn_app. apply in_or_app. right. assumption.",
+            "intros p q x y Hx Hy.\nexists (length p).\nsplit.\n- rewrite firstn_append.\nexact Hx.\n- rewrite skipn_append. auto."
+        ]
+    },
+    {
+        "lemma-name": "earlier_append_iff",
+        "proof-shots": [
+            "intros x y l l'.\nsplit.\n- intros [i [Hx Hy]].\nrewrite firstn_app, skipn_app in Hx, Hy.\npose proof (le_lt_dec i (length l)) as G.\ndestruct G as [G|G].\n+ rewrite firstn_all, Nat.sub_diag, app_nil_r in Hx, Hy; auto.\napply in_app_iff in Hx.\ndestruct Hx as [Hx|Hx].\n* left. exists i. split; auto.\n* right. left. split; auto.\napply skipn_in. auto.\n+ rewrite firstn_exact_length, skipn_all_n in Hx, Hy; auto.\nright. right. exists (i - length l). split; auto.\n- intros [[i [Hx Hy]]|[Hx Hy]|[i [Hx Hy]]].\n+ apply earlier_left. exists i. auto.\n+ apply earlier_append; auto.\n+ apply earlier_right. exists i. auto.",
+            "intros x y l l'.\nsplit.\n- intros [i [Hx Hy]].\nrewrite firstn_app in Hx. rewrite skipn_app in Hy.\npose proof (le_lt_dec i (length l)) as G.\ndestruct G as [G|G].\n+ rewrite firstn_all, Nat.sub_diag, app_nil_r in Hx, Hy; auto.\napply in_app_iff in Hx.\ndestruct Hx as [Hx|Hx].\n* left. exists i. split; auto.\n* right. left. split; auto.\n+ rewrite firstn_exact_length, skipn_all_n in Hx, Hy; auto.\nright. right. exists (i - length l). split; auto.\n- intros [[i [Hx Hy]]|[Hx Hy]|[i [Hx Hy]]].\n+ apply earlier_left. exists i. auto.\n+ apply earlier_append; auto.\n+ apply earlier_right. exists i. auto.",
+            "split; intros.\n- destruct H as [i [H H0]].\nrewrite firstn_app in H.\nrewrite skipn_app in H0.\npose proof (le_lt_dec i (length l)) as G.\ndestruct G as [G|G].\n+ rewrite <- Nat.sub_0_le in G; auto.\nrewrite G in *.\nsimpl in *.\nrewrite app_nil_r in H.\napply in_app_iff in H0.\ndestruct H0.\n* left; exists i; auto.\n* right; left; split; auto.\n+ right.\nrewrite firstn_all_n in H; try lia.\nrewrite skipn_all_n in H0; try lia.\nrewrite app_nil_l in H0.\napply in_app_iff in H.\ndestruct H.\n* apply skipn_in in H0; auto.\n* right.\nexists (i - length l); auto.\n- destruct H.\n+ apply earlier_left; auto.\n+ destruct H.\n* destruct H.\napply earlier_append; auto.\n* apply earlier_right; auto."
+        ]
+    },
+    {
+        "lemma-name": "earlier_cons",
+        "proof-shots": [
+            "intros p x y H.\nexists 1. simpl. split; auto."
+        ]
+    },
+    {
+        "lemma-name": "earlier_cons_shift",
+        "proof-shots": [
+            "intros p x y z [n [Hx Hy]].\nexists (S n). simpl. split; auto."
+        ]
+    }
+]

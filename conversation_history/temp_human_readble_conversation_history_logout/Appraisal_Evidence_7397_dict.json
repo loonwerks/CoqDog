@@ -1,0 +1,84 @@
+[
+    {
+        "lemma-name": "peel_fact",
+        "proof-shots": [
+            "intros e x y H et Hlen Hpeel Het_size.\neconstructor.\n- eapply peel_fact'; eauto.\n- lia."
+        ]
+    },
+    {
+        "lemma-name": "inv_recon_mt",
+        "proof-shots": [
+            "intros.\ninvc H.\ndestruct et;\nrepeat ff;\ntry (unfold OptMonad_Coq.bind in *);\nrepeat ff;\ntry solve_by_inversion.\n-\neauto.\n(*\n-\nright.\nright.\neauto. *)",
+            "intros ls et H.\ninvc H.\ndestruct et;\nrepeat ff;\ntry (unfold OptMonad_Coq.bind in *);\nrepeat ff;\ntry solve_by_inversion.\n- eauto."
+        ]
+    },
+    {
+        "lemma-name": "inv_recon_nn",
+        "proof-shots": [
+            "intros ls et n n0 H.\ninvc H.\ndestruct et;\nrepeat ff;\ntry (unfold OptMonad_Coq.bind in *);\nrepeat ff;\ntry solve_by_inversion.\n- split; reflexivity.",
+            "intros ls et n n0 H.\ninvc H.\ndestruct et;\nrepeat ff;\ntry (unfold OptMonad_Coq.bind in *);\nrepeat ff;\ndestruct ls;\ntry solve_by_inversion."
+        ]
+    },
+    {
+        "lemma-name": "inv_recon_gg",
+        "proof-shots": [
+            "intros p ps ls et n ec H.\ninvc H.\ndestruct et;\nrepeat ff;\ntry (unfold OptMonad_Coq.bind in *);\nrepeat ff;\ndestruct ls;\ntry solve_by_inversion.\n- exists ls, et.\nsplit; reflexivity.",
+            "intros p ps ls et n ec H.\ninvc H.\ndestruct et; repeat ff; try (unfold OptMonad_Coq.bind in *); repeat ff; try solve_by_inversion.\n-\nrepeat_eexists.\ndestruct ls; ff."
+        ]
+    },
+    {
+        "lemma-name": "inv_recon_hh",
+        "proof-shots": [
+            "intros p ps ls et n et' H.\ninvc H.\ndestruct et; repeat ff; try (unfold OptMonad_Coq.bind in *); repeat ff; try solve_by_inversion.\n- split; reflexivity.\n- destruct ls; ff.",
+            "intros p ps ls et n et' H.\ninvc H.\ndestruct et; repeat ff; try (unfold OptMonad_Coq.bind in *); repeat ff; destruct ls; try solve_by_inversion."
+        ]
+    },
+    {
+        "lemma-name": "inv_recon_ee",
+        "proof-shots": [
+            "intros p ps ls et n ec' H.\ninvc H.\ndestruct et; repeat ff; try (unfold OptMonad_Coq.bind in *); repeat ff; destruct ls; try solve_by_inversion.\n- exists et.\nsplit; reflexivity.",
+            "intros p ps ls et n ec' H.\ninvc H.\ndestruct et; repeat ff; try (unfold OptMonad_Coq.bind in *); repeat ff; try solve_by_inversion.\n- repeat eexists.\ndestruct ls; ff."
+        ]
+    },
+    {
+        "lemma-name": "inv_recon_ss",
+        "proof-shots": [
+            "intros ls et ec1 ec2 H.\ninvc H.\ndestruct et; repeat ff; try (unfold OptMonad_Coq.bind in *); repeat ff; try solve_by_inversion.\n- repeat eexists."
+        ]
+    },
+    {
+        "lemma-name": "recon_inv_gg",
+        "proof-shots": [
+            "intros sig ls p ps et e H.\ninvc H.\ndestruct et; repeat ff; try (unfold OptMonad_Coq.bind in *); repeat ff; try solve_by_inversion.\n- econstructor. reflexivity.",
+            "intros sig ls p ps et e H.\ninvc H.\nrepeat ff; try (unfold OptMonad_Coq.bind in *); repeat ff; try solve_by_inversion; econstructor.\nsymmetry. tauto."
+        ]
+    },
+    {
+        "lemma-name": "recon_inv_ss",
+        "proof-shots": [
+            "intros ls H1 H2 ec1 ec2 H.\ninvc H.\nrepeat ff; try (unfold OptMonad_Coq.bind in *); repeat ff; try solve_by_inversion.\nsplit; econstructor; reflexivity.",
+            "intros ls H1 H2 ec1 ec2 H.\ninvc H.\nrepeat ff; try (unfold OptMonad_Coq.bind in *); repeat ff; try solve_by_inversion.\nsplit; econstructor; symmetry; eassumption."
+        ]
+    },
+    {
+        "lemma-name": "wrap_reconP",
+        "proof-shots": [
+            "intros ec e H.\ninvc H.\neconstructor.\nreflexivity.",
+            "intros ec e H.\ninvc H.\neconstructor.\ncongruence."
+        ]
+    },
+    {
+        "lemma-name": "fold_recev",
+        "proof-shots": [
+            "ff.\ntauto."
+        ]
+    },
+    {
+        "lemma-name": "etfun_reconstruct",
+        "proof-shots": [
+            "intros e e0 e1 H.\ninduction H.\n- rewrite fold_recev in H.\napply wrap_reconP in H.\ninvc H.\nrepeat ff; try (unfold OptMonad_Coq.bind in *); repeat ff; try solve_by_inversion.\nall: destruct et; repeat ff; try solve_by_inversion; try reflexivity.\n+ destruct ls; ff.\n+ destruct ls; ff.\n+ destruct ls; ff.\n+ destruct ls; ff.\n+ destruct ls; ff.\n+ destruct ls; ff.\n+ destruct ls; ff.",
+            "intros e e0 e1 H.\ngeneralizeEverythingElse e1.\ninduction e1; intros; invc H; repeat ff; try (unfold OptMonad_Coq.bind in *); repeat ff; try solve_by_inversion.\n- (* Case mt *)\ndestruct e; repeat ff; try solve_by_inversion.\nreflexivity.\n- (* Case uu *)\ndestruct f; repeat ff; try (unfold OptMonad_Coq.bind in *); repeat ff; try solve_by_inversion.\n+ (* Case EXTD *)\ndestruct e; repeat ff; try solve_by_inversion.\napply IHe1 in H1.\nrewrite H1.\nreflexivity.\n+ (* Case COMP *)\ndestruct e; repeat ff; try solve_by_inversion.\nreflexivity.\n+ (* Case ENCR *)\ndestruct e; repeat ff; try solve_by_inversion.\nreflexivity.\n+ (* Case KILL *)\ndestruct e; repeat ff; try solve_by_inversion.\nreflexivity.\n+ (* Case KEEP *)\ndestruct e; repeat ff; try solve_by_inversion.\napply IHe1 in H1.\nrewrite H1.\nreflexivity.\n- (* Case nn *)\ndestruct e; repeat ff; try solve_by_inversion.\nreflexivity.\n- (* Case ss *)\ndestruct e; repeat ff; try (unfold OptMonad_Coq.bind in *); repeat ff; try solve_by_inversion.\napply IHe1_1 in H1.\napply IHe1_2 in H2.\nrewrite H1.\nrewrite H2.\nreflexivity.",
+            "intros e e0 e1 H.\ngeneralizeEverythingElse e1.\ninduction e1; intros; invc H; repeat ff; try (unfold OptMonad_Coq.bind in *); repeat ff; try solve_by_inversion.\n- (* Case mt *)\nreflexivity.\n- (* Case uu *)\nassert (e1 = et_fun e2).\n{\neapply IHe1.\neconstructor.\nsymmetry.\neassumption.\n}\ncongruence.\n- assert (e1 = et_fun e2).\n{\neapply IHe1.\neconstructor.\nsymmetry.\neassumption.\n}\ncongruence.\n- (* Case ss *)\nrepeat ff; try (unfold OptMonad_Coq.bind in * ); repeat ff.\nassert (e1_1 = et_fun e1).\n{\neapply IHe1_1.\neconstructor.\nsymmetry.\neassumption.\n}\nassert (e1_2 = et_fun e2).\n{\neapply IHe1_2.\neconstructor.\nsymmetry.\neassumption.\n}\ncongruence."
+        ]
+    }
+]

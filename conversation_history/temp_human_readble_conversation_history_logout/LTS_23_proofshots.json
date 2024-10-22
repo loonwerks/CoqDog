@@ -1,0 +1,160 @@
+[
+    {
+        "lemma-name": "step_pl_eq",
+        "proof-shots": [
+            "intros st0 ev st1 H.\ninduction H; simpl; auto."
+        ]
+    },
+    {
+        "lemma-name": "step_seval",
+        "proof-shots": [
+            "intros st0 ev st1 H.\ninduction H; simpl; try rewrite IHstep; try reflexivity.\n- apply step_pl_eq in H. rewrite H. reflexivity."
+        ]
+    },
+    {
+        "lemma-name": "lstar_transitive",
+        "proof-shots": [
+            "intros st0 tr0 st1 tr1 st2 H0 H1.\ninduction H0.\n- simpl. assumption.\n- simpl. apply lstar_tran with (st1:=st1); assumption.\n- apply lstar_silent_tran with (st1:=st1); assumption.",
+            "intros st0 tr0 st1 tr1 st2 H0 H1.\ninduction H0.\n- simpl. assumption.\n- simpl. eapply lstar_tran; eauto.\n- eapply lstar_silent_tran; eauto."
+        ]
+    },
+    {
+        "lemma-name": "star_transitive",
+        "proof-shots": [
+            "intros st0 st1 st2 H0 H1.\ninduction H0.\n- assumption.\n- eapply star_tran; eauto."
+        ]
+    },
+    {
+        "lemma-name": "lstar_star",
+        "proof-shots": [
+            "intros st0 tr st1 H.\ninduction H.\n- apply star_refl.\n- eapply star_tran; eauto.\n- eapply star_tran; eauto."
+        ]
+    },
+    {
+        "lemma-name": "star_lstar",
+        "proof-shots": [
+            "intros st0 st1 H.\ninduction H.\n- exists []. apply lstar_refl.\n- destruct IHstar as [tr Htr].\ndestruct e.\n+ exists (e :: tr). eapply lstar_tran; eauto.\n+ exists tr. eapply lstar_silent_tran; eauto."
+        ]
+    },
+    {
+        "lemma-name": "star_seval",
+        "proof-shots": [
+            "intros st0 st1 H.\ninduction H.\n- reflexivity.\n- rewrite <- IHstar. apply step_seval. assumption.",
+            "intros st0 st1 H.\ninduction H.\n- reflexivity.\n- eapply step_seval in H.\nrewrite <- H.\nexact IHstar."
+        ]
+    },
+    {
+        "lemma-name": "steps_preserves_eval",
+        "proof-shots": [
+            "intros t p p' e0 e1 H.\neapply star_seval in H.\nsimpl in H.\nassumption."
+        ]
+    },
+    {
+        "lemma-name": "star_strem",
+        "proof-shots": [
+            "intros st0 st1 j p H.\ninduction H.\n- apply star_refl.\n- eapply star_tran; eauto. eapply stattstep; eauto."
+        ]
+    },
+    {
+        "lemma-name": "star_stls",
+        "proof-shots": [
+            "intros st0 st1 t H.\ninduction H.\n- apply star_refl.\n- eapply star_tran; eauto. eapply stlseqstep; eauto."
+        ]
+    },
+    {
+        "lemma-name": "star_stbsl",
+        "proof-shots": [
+            "intros st0 st1 j t p e H.\ninduction H.\n- apply star_refl.\n- eapply star_tran; eauto. eapply stbslstep; eauto."
+        ]
+    },
+    {
+        "lemma-name": "star_stbsr",
+        "proof-shots": [
+            "intros st0 st1 j e H.\ninduction H.\n- apply star_refl.\n- eapply star_tran; eauto. eapply stbsrstep; eauto."
+        ]
+    },
+    {
+        "lemma-name": "lstar_stls",
+        "proof-shots": [
+            "intros st0 st1 t tr H.\ninduction H.\n- apply lstar_refl.\n- eapply lstar_tran; eauto.\n- eapply lstar_silent_tran; eauto."
+        ]
+    },
+    {
+        "lemma-name": "lstar_strem",
+        "proof-shots": [
+            "intros st st' tr p r H.\ninduction H.\n- apply lstar_refl.\n- eapply lstar_tran; eauto. eapply stattstep; eauto.\n- eapply lstar_silent_tran; eauto. eapply stattstep; eauto."
+        ]
+    },
+    {
+        "lemma-name": "lstar_stbsl",
+        "proof-shots": [
+            "intros st0 st1 j t p e tr H.\ninduction H.\n- apply lstar_refl.\n- eapply lstar_tran; eauto. eapply stbslstep; eauto.\n- eapply lstar_silent_tran; eauto. eapply stbslstep; eauto."
+        ]
+    },
+    {
+        "lemma-name": "lstar_stbsr",
+        "proof-shots": [
+            "intros st0 st1 j e tr H.\ninduction H.\n- apply lstar_refl.\n- eapply lstar_tran; eauto. eapply stbsrstep; eauto.\n- eapply lstar_silent_tran; eauto. eapply stbsrstep; eauto.",
+            "intros st0 st1 j e tr H.\ninduction H.\n- apply lstar_refl.\n- eapply lstar_tran; eauto.\n- eapply lstar_silent_tran; eauto."
+        ]
+    },
+    {
+        "lemma-name": "lstar_stbparl",
+        "proof-shots": [
+            "intros st0 st1 st2 j tr H.\ninduction H.\n- apply lstar_refl.\n- eapply lstar_tran; eauto. eapply stbpstepleft; eauto.\n- eapply lstar_silent_tran; eauto. eapply stbpstepleft; eauto.",
+            "intros st0 st1 st2 j tr H.\ninduction H.\n- apply lstar_refl.\n- eapply lstar_tran; eauto.\n- eapply lstar_silent_tran; eauto."
+        ]
+    },
+    {
+        "lemma-name": "lstar_stbparr",
+        "proof-shots": [
+            "intros st0 st1 st2 j tr H.\ninduction H.\n- apply lstar_refl.\n- eapply lstar_tran; eauto.\n- eapply lstar_silent_tran; eauto."
+        ]
+    },
+    {
+        "lemma-name": "star_stbp",
+        "proof-shots": [
+            "intros st0 st1 st2 st3 j H0 H1.\neapply star_transitive.\n- eapply lstar_stbparl. eapply star_lstar. exact H0.\n- eapply lstar_stbparr. eapply star_lstar. exact H1.",
+            "intros st0 st1 st2 st3 j H0 H1.\ninduction H0.\n- induction H1.\n+ apply star_refl.\n+ eapply star_tran. apply stbpstepright. apply H. apply IHstar.\n- eapply star_tran. apply stbpstepleft. apply H. apply IHstar."
+        ]
+    },
+    {
+        "lemma-name": "correct_path_exists",
+        "proof-shots": [
+            "intros t.\ninduction t; intros p e; simpl.\n- eapply star_tran.\n+ apply stasp.\n+ apply star_refl.\n- eapply star_tran.\n+ apply statt.\n+ eapply star_tran.\n* apply star_strem. apply IHt.\n* eapply star_tran.\n-- apply stattstop.\n-- apply star_refl.\n- eapply star_tran.\n+ apply stlseq.\n+ eapply star_tran.\n* apply star_stls. apply IHt1.\n* eapply star_tran.\n-- apply stlseqstop.\n-- apply star_stls. apply IHt2.\n- eapply star_tran.\n+ apply stbseq.\n+ eapply star_tran.\n* apply star_stbsl. apply IHt1.\n* eapply star_tran.\n-- apply stbslstop.\n-- eapply star_tran.\n++ apply star_stbsr. apply IHt2.\n++ eapply star_tran.\n** apply stbsrstop.\n** apply star_refl.\n- eapply star_tran.\n+ apply stbpar.\n+ eapply star_tran.\n* apply star_stbp.\n-- apply IHt1.\n-- apply IHt2.\n* eapply star_tran.\n-- apply stbpstop.\n-- apply star_refl.",
+            "intros t.\ninduction t; intros p' e'; simpl.\n- eapply star_tran.\n+ apply stasp.\n+ apply star_refl.\n- eapply star_tran.\n+ apply statt.\n+ eapply star_tran.\n* apply star_strem. apply IHt.\n* eapply star_tran.\n-- apply stattstop.\n-- apply star_refl.\n- eapply star_tran.\n+ apply stlseq.\n+ eapply star_tran.\n* apply star_stls. apply IHt1.\n* eapply star_tran.\n-- apply stlseqstop.\n-- apply star_stls. apply IHt2.\n- eapply star_tran.\n+ apply stbseq.\n+ eapply star_tran.\n* apply star_stbsl. apply IHt1.\n* eapply star_tran.\n-- apply stbslstop.\n-- eapply star_tran.\n++ apply star_stbsr. apply IHt2.\n++ eapply star_tran.\n** apply stbsrstop.\n** apply star_refl.\n- eapply star_tran.\n+ apply stbpar.\n+ eapply star_tran.\n* apply star_stbp.\n-- apply IHt1.\n-- apply IHt2.\n* eapply star_tran.\n-- apply stbpstop.\n-- apply star_refl.",
+            "intros t.\ninduction t; intros p e.\n- simpl. eapply star_tran.\n+ apply stasp.\n+ apply star_refl.\n- simpl. eapply star_tran.\n+ apply statt.\n+ eapply star_tran.\n* eapply star_strem. apply IHt.\n* eapply star_tran.\n-- apply stattstop.\n-- apply star_refl.\n- simpl. eapply star_tran.\n+ apply stlseq.\n+ eapply star_tran.\n* eapply star_stls. apply IHt1.\n* eapply star_tran.\n-- apply stlseqstop.\n-- eapply star_stls. apply IHt2.\n- simpl. eapply star_tran.\n+ apply stbseq.\n+ eapply star_tran.\n* eapply star_stbsl. apply IHt1.\n* eapply star_tran.\n-- apply stbslstop.\n-- eapply star_tran.\n++ eapply star_stbsr. apply IHt2.\n++ eapply star_tran.\n** apply stbsrstop.\n** apply star_refl.\n- simpl. eapply star_tran.\n+ apply stbpar.\n+ eapply star_tran.\n* eapply star_stbp.\n-- apply IHt1.\n-- apply IHt2.\n* eapply star_tran.\n-- apply stbpstop.\n-- apply star_refl.",
+            "intros t.\ninduction t; intros p e; simpl; eapply star_tran; eauto.\n- apply stasp.\n- apply statt.\n- eapply star_transitive.\n+ eapply star_strem. apply IHt.\n+ eapply star_tran; eauto.\napply stattstop.\n- apply stlseq.\n- eapply star_transitive.\n+ eapply star_stls. apply IHt1.\n+ eapply star_tran; eauto.\napply stlseqstop.\n- eapply star_transitive.\n+ eapply star_stbsl. apply IHt1.\n+ eapply star_transitive.\n* eapply star_tran; eauto.\napply stbslstop.\n* eapply star_stbsr. apply IHt2.\n- apply stbpar.\n- eapply star_transitive.\n+ eapply star_stbp; eauto.\napply IHt1.\n+ eapply star_tran; eauto.\napply stbpstop.",
+            "intros t.\ninduction t; intros p e; simpl.\n- eapply star_tran; eauto. apply stasp.\n- eapply star_tran; eauto.\neapply star_transitive.\napply star_strem.\napply IHt.\neapply star_tran; eauto. apply stattstop.\n- eapply star_tran; eauto. apply stlseq.\n- eapply star_tran; eauto.\neapply star_transitive.\napply star_stls.\napply IHt1.\neapply star_tran; eauto. apply stlseqstop.\n- eapply star_tran; eauto. apply stbseq.\n- eapply star_tran; eauto.\neapply star_transitive.\napply star_stbsl.\napply IHt1.\neapply star_tran; eauto.\neapply star_transitive.\napply star_stbsr.\napply IHt2.\neapply star_tran; eauto. apply stbsrstop.\n- eapply star_tran; eauto. apply stbpar.\n- eapply star_tran; eauto.\neapply star_transitive.\napply star_stbp.\napply IHt1.\neapply star_tran; eauto.\neapply star_transitive.\napply star_stbp.\napply IHt2.\neapply star_tran; eauto. apply stbpstop."
+        ]
+    },
+    {
+        "lemma-name": "never_stuck",
+        "proof-shots": [
+            "intros m n st0 st1 st2 H0 H1.\ninduction H0.\n- simpl. apply H1.\n- simpl. eapply nstar_tran; eauto."
+        ]
+    },
+    {
+        "lemma-name": "nstar_transitive",
+        "proof-shots": [
+            "intros m n st0 st1 st2 H0 H1.\ninduction H0.\n- simpl. apply H1.\n- simpl. eapply nstar_tran; eauto.\napply IHnstar."
+        ]
+    },
+    {
+        "lemma-name": "nstar_star",
+        "proof-shots": [
+            "intros n st0 st1 H.\ninduction H.\n- apply star_refl.\n- eapply star_tran; eauto.",
+            "intros n st0 st1 H.\ninduction H.\n- apply star_refl.\n- eapply star_transitive; eauto.",
+            "intros n st0 st1 H.\ninduction H.\n- apply star_refl.\n- eapply star_tran; eauto.",
+            "intros n st0 st1 H.\ninduction H.\n- apply star_refl.\n- eapply star_transitive; eauto using star_tran."
+        ]
+    },
+    {
+        "lemma-name": "star_nstar",
+        "proof-shots": [
+            "intros st0 st1 H.\ninduction H.\n- exists 0. apply nstar_refl.\n- destruct IHstar as [n Hn].\nexists (S n).\neapply nstar_tran; eauto.",
+            "intros st0 st1 H.\ninduction H.\n- exists 0. apply nstar_refl.\n- destruct IHstar as [n Hn].\nexists (S n).\neapply nstar_tran; eauto.",
+            "intros st0 st1 H.\ninduction H.\n- exists 0. apply nstar_refl.\n- destruct IHstar as [n Hn].\nexists (S n).\neapply nstar_transitive; eauto using nstar_tran."
+        ]
+    }
+]

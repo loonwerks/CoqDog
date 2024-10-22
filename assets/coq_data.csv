@@ -1,0 +1,401 @@
+item-name,item-body,label_int,label
+firstn_append,"forall l l': list A, firstn (length l) (l ++ l') = l.",1,Lemma
+firstn_append_proof,"induction n as [|k iHk]; intros l1 l2. - now simpl. - destruct l1 as [|x xs]. * unfold skipn at 2, length. repeat rewrite app_nil_l. rewrite <- Minus.minus_n_O. auto. * rewrite <- app_comm_cons. simpl. apply iHk.",1,Proof
+skipn_append,"forall l l': list A, skipn (length l) (l ++ l') = l'.",1,Lemma
+skipn_append_proof,induction l; intros; simpl; auto. rewrite IHl; auto.,1,Proof
+skipn_all,"forall l: list A, skipn (length l) l = [].",1,Lemma
+skipn_all_proof,induction l; intros; simpl; auto.,1,Proof
+skipn_nil,"forall i, @skipn A i [] = [].",1,Lemma
+skipn_nil_proof,induction l; intros; simpl; auto.,1,Proof
+firstn_all_n,"forall (l: list A) n, length l <= n -> firstn n l = l.",1,Lemma
+firstn_all_n_proof,destruct i; simpl; auto.,1,Proof
+skipn_all_n,"forall (l: list A) n, length l <= n -> skipn n l = [].",1,Lemma
+skipn_all_n_proof,induction l; intros; simpl. - rewrite firstn_nil; auto. - destruct n. simpl in H. lia. simpl in *. apply le_S_n in H. apply IHl in H. rewrite H; auto.,1,Proof
+firstn_in,"forall x i (l: list A), In x (firstn i l) -> In x l.",1,Lemma
+firstn_in_proof,induction l; intros; simpl. - rewrite skipn_nil; auto. - destruct n; simpl in *. lia. apply le_S_n in H. apply IHl; auto.,1,Proof
+skipn_in,"forall x i (l: list A), In x (skipn i l) -> In x l.",1,Lemma
+skipn_in_proof,induction i; intros. - simpl in H; tauto. - destruct l. + simpl in H; tauto. + simpl in H. destruct H. subst; simpl; auto. apply IHi in H. simpl; auto.,1,Proof
+skipn_zero,"forall l: list A, skipn 0 l = l.",1,Lemma
+skipn_zero_proof,induction i; intros. - simpl in H; tauto. - destruct l. + simpl in H; tauto. + simpl in H. apply IHi in H. simpl; auto.,1,Proof
+in_skipn_cons,"forall i x y (l: list A), In x (skipn i l) -> In x (skipn i (y :: l)).",1,Lemma
+in_skipn_cons_proof,destruct l; simpl; auto.,1,Proof
+nodup_append,"forall l l': list A, NoDup l -> NoDup l' -> disjoint_lists l l' -> NoDup (l ++ l').",1,Lemma
+nodup_append_proof,induction i; intros; simpl. - rewrite skipn_zero in H; auto. - destruct l. + simpl in H; tauto. + simpl in H; auto.,1,Proof
+in_cons_app_cons,"forall x y z (l: list A), In x (y :: l ++ [z]) <-> x = y \/ In x l \/ x = z.",1,Lemma
+in_cons_app_cons_proof,intros. induction H. - rewrite app_nil_l; auto. - rewrite <- app_comm_cons. apply NoDup_cons. + intro. apply in_app_iff in H3. destruct H3; intuition. apply H1 in H3; try tauto; simpl; auto. + apply IHNoDup. unfold disjoint_lists; intros. apply H1 in H4; try tauto. simpl; auto.,1,Proof
+earlier_in_left,"forall l x y, earlier l x y -> In x l.",1,Lemma
+earlier_in_left_proof,intros. rewrite app_comm_cons. rewrite in_app_iff; simpl. intuition.,1,Proof
+earlier_in_right,"forall l x y, earlier l x y -> In y l.",1,Lemma
+earlier_in_right_proof,intros. destruct H as [i]. destruct H. apply firstn_in in H; auto.,1,Proof
+earlier_left,"forall p q x y, earlier p x y -> earlier (p ++ q) x y.",1,Lemma
+earlier_left_proof,intros. destruct H as [i]. destruct H. apply skipn_in in H0; auto.,1,Proof
+earlier_right,"forall p q x y, earlier q x y -> earlier (p ++ q) x y.",1,Lemma
+earlier_right_proof,intros. destruct H as [i]. destruct H. exists i. split. - rewrite firstn_app. apply in_or_app. left; auto. - rewrite skipn_app. apply in_or_app. left; auto.,1,Proof
+earlier_append,"forall p q x y, In x p -> In y q -> earlier (p ++ q) x y.",1,Lemma
+earlier_append_proof,intros. destruct H as [i]. destruct H. exists (length p + i). assert (G: length p + i - length p = i). lia. split. - rewrite firstn_app. apply in_or_app. right. rewrite G; auto. - rewrite skipn_app. apply in_or_app. right. rewrite G; auto.,1,Proof
+earlier_append_iff,"forall x y (l l': list A), earlier (l ++ l') x y <-> earlier l x y \/ In x l /\ In y l' \/ earlier l' x y.",1,Lemma
+earlier_append_iff_proof,intros. exists (length p). rewrite firstn_append. rewrite skipn_append. auto.,1,Proof
+earlier_cons,"forall p x y, In y p -> earlier (x :: p) x y.",1,Lemma
+earlier_cons_proof,split; intros. - destruct H as [i]. destruct H. rewrite firstn_app in H. rewrite skipn_app in H0. pose proof (le_lt_dec i (length l)) as G. destruct G as [G|G]. + rewrite <- Nat.sub_0_le in G; auto. rewrite G in *. simpl in *. rewrite app_nil_r in H. apply in_app_iff in H0. destruct H0. * left; exists i; auto. * right; left; split; auto. apply firstn_in in H; auto. + right. rewrite firstn_all_n in H; try lia. rewrite skipn_all_n in H0; try lia. rewrite app_nil_l in H0. apply in_app_iff in H. destruct H. * apply skipn_in in H0; auto. * right. exists (i - length l); auto. - destruct H. apply earlier_left; auto. destruct H. + destruct H. apply earlier_append; auto. + apply earlier_right; auto.,1,Proof
+earlier_cons_shift,"forall p x y z, earlier p x y -> earlier (z :: p) x y.",1,Lemma
+earlier_cons_shift_proof,intros; exists 1; simpl; auto.,1,Proof
+pairsinv,"forall (a a' b b':nat), a <> a' -> (a,b) <> (a',b').",1,Lemma
+pairsinv_proof,intros. congruence.,1,Proof
+termsub_transitive,"forall t t' t'', term_sub t t' -> term_sub t' t'' -> term_sub t t''.",1,Lemma
+termsub_transitive_proof,generalizeEverythingElse t''. induction t''; intros H H0; ff.,1,Proof
+anno_unanno,"forall t i, unanno (snd (anno t i)) = t.",1,Lemma
+anno_unanno_proof,intros. generalizeEverythingElse t. induction t; intros. - destruct a; ff. - ff. erewrite <- IHt. jkjke. - ff. erewrite <- IHt1. erewrite <- IHt2. jkjke. jkjke. - ff. erewrite <- IHt1. erewrite <- IHt2. jkjke. jkjke. - ff. erewrite <- IHt1. erewrite <- IHt2. jkjke. jkjke.,1,Proof
+eval_aeval,"forall t p e i, eval t p e = aeval (snd (anno t i)) p e.",1,Lemma
+eval_aeval_proof,induction t; intros; simpl; auto; repeat expand_let_pairs; simpl; try (repeat jkjk; auto;congruence); try (repeat jkjk'; auto).,1,Proof
+same_anno_range,"forall t i a b n n', anno t i = (n,a) -> anno t i = (n',b) -> n = n'.",1,Lemma
+same_anno_range_proof,intros. generalizeEverythingElse t. induction t; intros; try destruct a; ff.,1,Proof
+anno_mono,"forall (t:Term) (i j:nat) (t':AnnoTerm), anno t i = (j,t') -> j > i.",1,Lemma
+anno_mono_proof,induction t; intros; ff; repeat find_apply_hyp_hyp; lia.,1,Proof
+anno_range,"forall x i j t', anno x i = (j,t') -> range (t') = (i, j).",1,Lemma
+anno_range_proof,induction x; intros; ff.,1,Proof
+anno_well_formed_r,"forall t i j t', anno t i = (j, t') -> well_formed_r_annt t'.",1,Lemma
+anno_well_formed_r_proof,intros. generalizeEverythingElse t. induction t; intros. - destruct a; ff. - ff. + econstructor. eauto. simpl. erewrite anno_range. 2: { eassumption. } tauto. simpl. erewrite anno_range. 2: { eassumption. } tauto. simpl. assert (n > S i) by (eapply anno_mono; eauto). lia. - ff. econstructor. eauto. eauto. simpl. erewrite anno_range. 2: { eassumption. } tauto. simpl. erewrite anno_range. 2: { eassumption. } erewrite anno_range. 2: { eassumption. } tauto. simpl. erewrite anno_range. 2: { eassumption. } tauto. - ff. econstructor. eauto. eauto. simpl. erewrite anno_range. 2: { eassumption. } tauto. simpl. erewrite anno_range. 2: { eassumption. } erewrite anno_range. 2: { eassumption. } tauto. simpl. erewrite anno_range. 2: { eassumption. } tauto. - ff. econstructor. eauto. eauto. simpl. erewrite anno_range. 2: { eassumption. } tauto. simpl. erewrite anno_range. 2: { eassumption. } erewrite anno_range. 2: { eassumption. } tauto. simpl. erewrite anno_range. 2: { eassumption. } tauto.,1,Proof
+event_id_works,"forall t, event_id_span' t = event_id_span (copland_compile t). Proof with (simpl in *; eauto). induction t... - destruct a... destruct s... - destruct s, s, s0... - destruct s, s, s0...",1,Lemma
+event_id_works_proof,"ith (simpl in *; eauto). induction t... - destruct a... destruct s... - destruct s, s, s0... - destruct s, s, s0...",1,Proof
+span_range,"forall t i j t', anno t i = (j, t') -> event_id_span' t = (j - i).",1,Lemma
+span_range_proof,intros. generalizeEverythingElse t. induction t; intros. - destruct a; try cbn in *; find_inversion; lia. - cbn in *. repeat break_let. find_inversion. assert (event_id_span' t = n - (S i)). { eauto. } rewrite H. assert (n > (S i)). { eapply anno_mono. eassumption. } lia. - cbn in *. repeat break_let. repeat find_inversion. assert (event_id_span' t1 = (n - i)) by eauto. assert (event_id_span' t2 = (j - n)) by eauto. repeat jkjke. assert (n > i /\ j > n). { split; eapply anno_mono; eauto. } lia. - cbn in *. repeat break_let. repeat find_inversion. assert (event_id_span' t1 = (n - (S i))) by eauto. assert (event_id_span' t2 = (n0 - n)) by eauto. repeat jkjke. assert (n > S i /\ n0 > n). { split; eapply anno_mono; eauto. } lia. - cbn in *. repeat break_let. repeat find_inversion. assert (event_id_span' t1 = (n - (S i))) by eauto. assert (event_id_span' t2 = (n0 - n)) by eauto. repeat jkjke. assert (n > S i /\ n0 > n). { split; eapply anno_mono; eauto. } lia.,1,Proof
+eqb_eq_aspid,"forall `{H : EqClass ID_Type} i1 i2, eqb_aspid i1 i2 = true -> i1 = i2.",1,Lemma
+eqb_eq_aspid_proof,unfold eqb_aspid. destruct H. eapply eqb_leibniz.,1,Proof
+eqb_eq_asp_params,"forall `{H : EqClass ID_Type} a a0 , eqb_asp_params a a0 = true <-> a = a0.",1,Lemma
+eqb_eq_asp_params_proof,intros. decide equality; subst; eapply EqClass_impl_DecEq; eauto. eapply EqClass_extends_to_list; eauto.,1,Proof
+eqb_eq_fwd,"forall f1 f2, eqb_fwd f1 f2 = true <-> f1 = f2.",1,Lemma
+eqb_eq_fwd_proof,induction a; destruct a0; simpl; repeat (rewrite Bool.andb_true_iff); repeat split; eauto; try inv H0; try rewrite eqb_leibniz; eauto; try (eapply EqClass_extends_to_list; eauto). - intros; destruct_conjs; subst. repeat (rewrite eqb_leibniz in *); subst. eapply general_list_eqb_leibniz in H1; subst; eauto. - eapply eqb_leibniz; eauto.,1,Proof
+eqb_eq_evidence,"forall e1 e2, eqb_evidence e1 e2 = true <-> e1 = e2.",1,Lemma
+eqb_eq_evidence_proof,"intros. decide equality; subst; try (try eapply EqClass_impl_DecEq; eauto; try eapply nat_EqClass; eauto; fail). - eapply eq_asp_params_dec. - destruct f, f0; eauto; right; intros HC; congruence.",1,Proof
+wfr_lseq_pieces,"forall r t1 t2, well_formed_r_annt (alseq r t1 t2) -> well_formed_r_annt t1 /\ well_formed_r_annt t2.",1,Lemma
+wfr_lseq_pieces_proof,intros. inversion H. tauto.,1,Proof
+wfr_at_pieces,"forall t r p, well_formed_r_annt (aatt r p t) -> well_formed_r_annt t.",1,Lemma
+wfr_at_pieces_proof,intros. inversion H. tauto.,1,Proof
+wfr_bseq_pieces,"forall r s t1 t2, well_formed_r_annt (abseq r s t1 t2) -> well_formed_r_annt t1 /\ well_formed_r_annt t2.",1,Lemma
+wfr_bseq_pieces_proof,intros. inversion H. tauto.,1,Proof
+wfr_bpar_pieces,"forall r s t1 t2, well_formed_r_annt (abpar r s t1 t2) -> well_formed_r_annt t1 /\ well_formed_r_annt t2.",1,Lemma
+wfr_bpar_pieces_proof,intros. inversion H. tauto.,1,Proof
+well_formed_range_r,"forall t, well_formed_r_annt t -> snd (range t) = fst (range t) + esize t.",1,Lemma
+well_formed_range_r_proof,induction t; try (intros H; simpl; inv H; simpl; repeat find_apply_hyp_hyp; lia).,1,Proof
+esize_nonempty,"forall t, esize t > 0.",1,Lemma
+esize_nonempty_proof,intros. induction t; intros; try (destruct a); (cbn; lia).,1,Proof
+wf_mono,"forall t, well_formed_r_annt t -> snd (range t) > fst (range t).",1,Lemma
+wf_mono_proof,intros. rewrite well_formed_range_r. pose (esize_nonempty t). lia. eauto.,1,Proof
+asp_lrange_irrel,"forall a i a0 a1 n n', anno (asp a) i = (n, a0) -> anno (asp a) i = (n',a1) -> a0 = a1.",1,Lemma
+asp_lrange_irrel_proof,intros. destruct a; ff.,1,Proof
+events_range,"forall t v p e, well_formed_r_annt t -> events t p e v -> fst (range t) <= ev v < snd (range t).",1,Lemma
+events_range_proof,intros t v p e H H0. pose proof H as G. apply well_formed_range_r in G. rewrite G. clear G. induction H0; try (inv_wfr; simpl in *; auto; repeat find_apply_hyp_hyp; repeat (find_apply_lem_hyp well_formed_range_r); lia).,1,Proof
+at_range,"forall x r i, S (fst r) = fst x -> snd r = S (snd x) -> fst r <= i < snd r -> i = fst r \/ fst x <= i < snd x \/ i = snd x.",1,Lemma
+at_range_proof,intros. pose proof lt_dec i (S (fst r)) as G. destruct G as [G|G]; [left; lia| right]. pose proof lt_dec i (snd x) as F. destruct F as [F|F]; [left; lia| right]. lia.,1,Proof
+lin_range,"forall x y i, snd x = fst y -> fst x <= i < snd y -> fst x <= i < snd x \/ fst y <= i < snd y.",1,Lemma
+lin_range_proof,intros. pose proof lt_dec i (snd x) as G. destruct G; lia.,1,Proof
+bra_range,"forall x y r i, S (fst r) = fst x -> snd x = fst y -> snd r = S (snd y) -> fst r <= i < snd r -> i = fst r \/ fst x <= i < snd x \/ fst y <= i < snd y \/ i = snd y.",1,Lemma
+bra_range_proof,intros. pose proof lt_dec i (S (fst r)) as G. destruct G as [G|G]; [left; lia| right]. pose proof lt_dec i (snd x) as F. destruct F as [F|F]; [left; lia| right]. pose proof lt_dec i (snd y) as E. destruct E; lia.,1,Proof
+events_range_event,"forall t p i e, well_formed_r_annt t -> fst (range t) <= i < snd (range t) -> exists v, events t p e v /\ ev v = i.",1,Lemma
+events_range_event_proof,intros t p i e H; revert i; revert p; revert e. induction H; intros; simpl in *. - destruct x; try destruct a; eapply ex_intro; split; auto; simpl in *; try lia. - find_eapply_lem_hyp at_range; eauto. repeat destruct_disjunct; subst; eauto. find_eapply_hyp_hyp. destruct_conjs. eauto. - do_lin_range; eauto; repeat destruct_disjunct; try lia; try (find_eapply_hyp_hyp; eauto; destruct_conjs; eauto). - do_bra_range; eauto; repeat destruct_disjunct; subst; try lia; try (find_eapply_hyp_hyp; eauto; destruct_conjs; eauto; tauto). + eapply ex_intro; split; try (auto; eauto;tauto). + eapply ex_intro; split; try (eauto; auto; tauto). - do_bra_range; eauto; repeat destruct_disjunct; subst; try lia; try (find_eapply_hyp_hyp; eauto; destruct_conjs; eauto; tauto). + eapply ex_intro; split; auto. + eapply ex_intro; split; eauto.,1,Proof
+events_injective,"forall t p e v1 v2, well_formed_r_annt t -> events t p e v1 -> events t p e v2 -> ev v1 = ev v2 -> v1 = v2.",1,Lemma
+events_injective_proof,intros. generalizeEverythingElse H. induction H; intros; try ( repeat wfr; aba; simpl in *; subst; auto; try (events_event_range; tauto); try (find_eapply_hyp_hyp; eauto); eauto).,1,Proof
+well_structured_range,"forall es, well_structured es -> snd (es_range es) = fst (es_range es) + es_size es.",1,Lemma
+well_structured_range_proof,induction es; simpl; intros; inv H; simpl; auto; try rewrite Nat.add_1_r; auto; apply IHes1 in H3; apply IHes2 in H4; lia.,1,Proof
+prec_in_left,"forall es ev1 ev2, prec es ev1 ev2 -> ev_in ev1 es.",1,Lemma
+prec_in_left_proof,intros; induction H; auto.,1,Proof
+prec_in_right,"forall es ev1 ev2, prec es ev1 ev2 -> ev_in ev2 es.",1,Lemma
+prec_in_right_proof,intros; induction H; auto.,1,Proof
+ws_evsys_range,"forall es e, well_structured es -> ev_in e es -> fst (es_range es) <= ev e < snd (es_range es).",1,Lemma
+ws_evsys_range_proof,intros. pose proof H as G. apply well_structured_range in G. rewrite G. clear G. revert H0. revert e. induction es; intros; simpl in *; inv H; simpl in *; inv H0; simpl; try lia. - apply IHes1 in H2; auto; lia. - apply IHes2 in H2; auto. apply well_structured_range in H4. lia. - apply IHes1 in H2; auto; lia. - apply IHes2 in H2; auto. apply well_structured_range in H4. lia.,1,Proof
+es_injective_events,"forall es ev0 ev1, well_structured es -> ev_in ev0 es -> ev_in ev1 es -> ev ev0 = ev ev1 -> ev0 = ev1.",1,Lemma
+es_injective_events_proof,intros. revert H2. revert H1. revert H0. revert ev1. revert ev0. induction H; intros; simpl in *. - inv H1; inv H2; auto. - inv H3; inv H4. + eapply IHwell_structured1 in H8; eauto. + apply ws_evsys_range in H8; auto. apply ws_evsys_range in H6; auto. lia. + apply ws_evsys_range in H8; auto. apply ws_evsys_range in H6; auto. lia. + eapply IHwell_structured2 in H8; eauto. - inv H3; inv H4. + eapply IHwell_structured1 in H8; eauto. + apply ws_evsys_range in H8; auto. apply ws_evsys_range in H6; auto. lia. + apply ws_evsys_range in H8; auto. apply ws_evsys_range in H6; auto. lia. + eapply IHwell_structured2 in H8; eauto.,1,Proof
+evsys_irreflexive,"forall es ev, well_structured es -> ~prec es ev ev.",1,Lemma
+evsys_irreflexive_proof,induction es; intros; intro; inv H; inv H0. - apply ws_evsys_range in H8; auto. apply ws_evsys_range in H9; auto. lia. - apply IHes1 in H8; auto. - apply IHes2 in H8; auto. - apply IHes1 in H8; auto. - apply IHes2 in H8; auto.,1,Proof
+evsys_transitive,"forall es ev0 ev1 ev2, well_structured es -> prec es ev0 ev1 -> prec es ev1 ev2 -> prec es ev0 ev2.",1,Lemma
+evsys_transitive_proof,induction es; intros. - inv H0. - inv H. inv H0. + inv H1. * apply ws_evsys_range in H10; auto. * apply prec_in_left in H7. apply ws_evsys_range in H7; auto. apply ws_evsys_range in H10; auto. lia. * apply prec_in_right in H7; auto. + assert (G: ev_in ev0 es1). apply prec_in_left in H9; auto. assert (F: ev_in ev1 es1). apply prec_in_right in H9; auto. inv H1; auto. eapply IHes1 in H7; eauto. apply prseq; auto. apply prec_in_right in H7; auto. + assert (G: ev_in ev0 es2). apply prec_in_left in H9; auto. assert (F: ev_in ev1 es2). apply prec_in_right in H9; auto. inv H1. * apply ws_evsys_range in H7; auto. apply ws_evsys_range in F; auto. lia. * apply prec_in_left in H7. apply ws_evsys_range in H7; auto. apply ws_evsys_range in F; auto. lia. * eapply IHes2 in H7; eauto. - inv H. inv H0. + inv H1. * eapply IHes1 in H7; eauto. * apply prec_in_left in H7. apply prec_in_right in H9. apply ws_evsys_range in H9; auto. apply ws_evsys_range in H7; auto. lia. + assert (G: ev_in ev0 es2). apply prec_in_left in H9; auto. assert (F: ev_in ev1 es2). apply prec_in_right in H9; auto. inv H1. * apply prec_in_left in H7. apply ws_evsys_range in H7; auto. apply ws_evsys_range in F; auto. lia. * eapply IHes2 in H7; eauto.,1,Proof
+ws_merge1,"forall r s x y z, well_structured (merge r x y) -> well_structured (merge s y z) -> well_structured (merge (fst r, snd s) x (merge s y z)).",1,Lemma
+ws_merge1_proof,intros r s x y z Hr Hs. inv Hr; inv Hs. constructor; simpl; auto; lia.,1,Proof
+ws_merge2,"forall r s x y z, well_structured (merge r x y) -> well_structured (merge s y z) -> well_structured (merge (fst r, snd s) (merge r x y) z).",1,Lemma
+ws_merge2_proof,intros r s x y z Hr Hs. inv Hr; inv Hs. constructor; simpl; auto; lia.,1,Proof
+merge_associative,"forall r s x y z, same_rel (merge (fst r, snd s) x (merge s y z)) (merge (fst r, snd s) (merge r x y) z).",1,Lemma
+merge_associative_proof,intros r s x y z. split; intro; inv H. - apply prparl; apply prparl; auto. - inv H5. + apply prparl; apply prparr; auto. + apply prparr; auto. - inv H5. + apply prparl; auto. + apply prparr; apply prparl; auto. - apply prparr; apply prparr; auto.,1,Proof
+merge_associative_pairs,"forall r0 r1 s0 s1 x y z, same_rel (merge (r0, s1) x (merge (s0, s1) y z)) (merge (r0, s1) (merge (r0, r1) x y) z).",1,Lemma
+merge_associative_pairs_proof,"intros. apply merge_associative with (s:=(s0, s1))(r:=(r0,r1)).",1,Proof
+ws_before1,"forall r s x y z, well_structured (before r x y) -> well_structured (before s y z) -> well_structured (before (fst r, snd s) x (before s y z)).",1,Lemma
+ws_before1_proof,intros r s x y z Hr Hs. inv Hr; inv Hs. constructor; simpl; auto; lia.,1,Proof
+ws_before2,"forall r s x y z, well_structured (before r x y) -> well_structured (before s y z) -> well_structured (before (fst r, snd s) (before r x y) z).",1,Lemma
+ws_before2_proof,intros r s x y z Hr Hs. inv Hr; inv Hs. constructor; simpl; auto; lia.,1,Proof
+before_associative,"forall r s x y z, same_rel (before (fst r, snd s) x (before s y z)) (before (fst r, snd s) (before r x y) z).",1,Lemma
+before_associative_proof,intros r s x y z. split; intro; inv H. - inv H6. + apply prseql; auto. + apply prseq; auto. - apply prseql; apply prseql; auto. - inv H5. + apply prseq; auto. + apply prseql; apply prseqr; auto. + apply prseqr; auto. - inv H5. + apply prseq; auto. + apply prseqr; apply prseq; auto. - inv H5. + apply prseq; auto. + apply prseql; auto. + apply prseqr; apply prseql; auto. - apply prseqr; apply prseqr; auto.,1,Proof
+before_associative_pairs,"forall r0 r1 s0 s1 x y z, same_rel (before (r0, s1) x (before (s0, s1) y z)) (before (r0, s1) (before (r0, r1) x y) z).",1,Lemma
+before_associative_pairs_proof,"intros. apply before_associative with (s:=(s0, s1))(r:=(r0,r1)).",1,Proof
+ws_exists,"forall es, well_structured es -> exists e, ev_in e es.",1,Lemma
+ws_exists_proof,intros. induction H. - exists e; auto. - destruct IHwell_structured1 as [e]. exists e; auto. - destruct IHwell_structured1 as [e]. exists e; auto.,1,Proof
+before_sup,"forall r x y e, sup (before r x y) e -> sup y e.",1,Lemma
+before_sup_proof,intros. inv H. auto.,1,Proof
+sup_supreme,"forall es e, well_structured es -> sup es e <-> supreme es e.",1,Lemma
+sup_supreme_proof,"unfold supreme; split. - induction H; intros. + inv H1. split; auto; intros; intro. inv H1. apply evsys_irreflexive in H2; auto. + inv H1. inv H3. apply IHwell_structured2 in H7. destruct H7. split. * apply ein_beforer; auto. * intros; intro. inv H4; inv H5. -- apply ws_evsys_range in H8; auto. apply ws_evsys_range in H12; auto. lia. -- apply prec_in_left in H11. apply ws_evsys_range in H1; auto. apply ws_evsys_range in H11; auto. lia. -- apply prec_in_right in H11. apply ws_evsys_range in H8; auto. apply ws_evsys_range in H11; auto. lia. -- apply ws_evsys_range in H1; auto. apply ws_evsys_range in H11; auto. lia. -- apply prec_in_left in H11. apply ws_evsys_range in H1; auto. apply ws_evsys_range in H11; auto. lia. -- apply H3 in H8. tauto. + inv H3. * apply IHwell_structured1 in H8. destruct H8. split. -- apply ein_mergel; auto. -- intros; intro. inv H4; inv H5. ++ apply H3 in H8; tauto. ++ apply prec_in_right in H11. apply ws_evsys_range in H8; auto. apply ws_evsys_range in H11; auto. lia. ++ apply prec_in_right in H11. apply ws_evsys_range in H8; auto. apply ws_evsys_range in H11; auto. lia. ++ apply prec_in_left in H11. apply ws_evsys_range in H1; auto. apply ws_evsys_range in H11; auto. lia. * apply IHwell_structured2 in H8. destruct H8. split. -- apply ein_merger; auto. -- intros; intro. inv H4; inv H5. ++ apply prec_in_left in H11. apply ws_evsys_range in H1; auto. apply ws_evsys_range in H11; auto. lia. ++ apply prec_in_right in H11. apply ws_evsys_range in H8; auto. apply ws_evsys_range in H11; auto. lia. ++ apply prec_in_left in H11. apply ws_evsys_range in H1; auto. apply ws_evsys_range in H11; auto. lia. ++ apply H3 in H8; tauto. - intro; destruct H0. induction H; intros. + inv H0; auto. + inv H0; auto. * cut (exists f, ev_in f y). -- intros. destruct H0 as [f]. specialize H1 with f. assert (G: prec (before (fst (es_range x), snd (es_range y)) x y) e f). apply prseq; auto. apply H1 in G; auto. tauto. -- apply ws_exists; auto. * apply sup_before. apply IHwell_structured2; auto. intros; intro. assert (G: prec (before (fst (es_range x), snd (es_range y)) x y) e e0). apply prseqr; auto. apply H1 in G; auto; tauto. + inv H0. * apply IHwell_structured1 in H7; auto. intros; intro. assert (G: prec (merge (fst (es_range x), snd (es_range y)) x y) e e0). apply prparl; auto. apply H1 in G; auto; tauto. * apply IHwell_structured2 in H7; auto. intros; intro. assert (G: prec (merge (fst (es_range x), snd (es_range y)) x y) e e0). apply prparr; auto. apply H1 in G; auto; tauto.",1,Proof
+supreme_max,"forall es, well_structured es -> supreme es (max es).",1,Lemma
+supreme_max_proof,intros. apply sup_supreme; auto. induction H; auto.,1,Proof
+evsys_range,"forall t p e, es_range (ev_sys t p e) = range t.",1,Lemma
+evsys_range_proof,induction t; intros; simpl; auto; repeat expand_let_pairs; simpl; auto.,1,Proof
+well_structured_evsys,"forall t p e, well_formed_r_annt t -> well_structured ev (ev_sys t p e).",1,Lemma
+well_structured_evsys_proof,induction t; intros; inv_wfr; simpl; try ( repeat expand_let_pairs; dest_range'; simpl in *; subst; auto; try destruct a; try destruct a; repeat (econstructor; repeat rewrite evsys_range; auto); tauto).,1,Proof
+evsys_events,"forall t p e ev, well_formed_r_annt t -> ev_in ev (ev_sys t p e) <-> events t p e ev.",1,Lemma
+evsys_events_proof,split; revert p; revert e; induction t; intros; inv_wfr; simpl in *; repeat expand_let_pairs; dest_range'; simpl in *; try (destruct a; auto; do_evin; auto); try (destruct a; try (destruct a); auto; do_evin; auto; tauto); try ( repeat dest_range; repeat (find_rewrite; simpl in * ); repeat (do_evin; auto); inv_events; auto); repeat (find_rewrite; simpl in * ); (find_apply_lem_hyp Nat.succ_inj ) ; subst; auto; tauto.,1,Proof
+supreme_unique,"forall t p e, well_formed_r_annt t -> exists ! v, supreme (ev_sys t p e) v.",1,Lemma
+supreme_unique_proof,intros t p e H. assert (G: well_structured ev (ev_sys t p e)). apply well_structured_evsys; auto. rewrite <- unique_existence. split. - exists (max (ev_sys t p e)). eapply supreme_max ; eauto. - unfold uniqueness. intros x y H0 H1. erewrite <- sup_supreme in H0; eauto. erewrite <- sup_supreme in H1; eauto. revert H1. revert H0. revert G. revert p. revert e. induction H; intros; try( repeat dest_range; simpl in *; repeat break_let; repeat do_before_sup; try (inv_ws; eauto; tauto); repeat inv_sup; auto; tauto).,1,Proof
+evsys_max_unique,"forall t p e, well_formed_r_annt t -> unique (supreme (ev_sys t p e)) (max (ev_sys t p e)).",1,Lemma
+evsys_max_unique_proof,intros t p e H. assert (G: well_structured ev (ev_sys t p e)). apply well_structured_evsys; auto. unfold unique. split. apply supreme_max with (ev:=ev); auto. intros. rewrite <- sup_supreme with (ev:=ev) in H0; auto. revert H0. revert G. revert x'. revert p. revert e. induction H; intros; repeat dest_range; repeat expand_let_pairs; inv_ws. - repeat inv_sup; auto. - repeat inv_sup; auto. - cbn. apply IHwell_formed_r_annt2. eassumption. cbn in *. do_before_sup. eassumption. - repeat do_before_sup. solve_by_inversion. - do_before_sup. solve_by_inversion.,1,Proof
+max_eval,"forall t p e, well_formed t -> out_ev (max (ev_sys t p e)) = aeval t p e.",1,Lemma
+max_eval_proof,intros. revert e. revert p. induction H; intros; simpl; repeat expand_let_pairs; simpl; auto. destruct x; simpl; auto.,1,Proof
+lseq_assoc,"forall t1 t2 t3 i p e n n' t' t'', anno (lseq t1 (lseq t2 t3)) i = (n, t') -> anno (lseq (lseq t1 t2) t3) i = (n',t'') -> same_rel (ev_sys t' p e) (ev_sys t'' p e).",1,Lemma
+lseq_assoc_proof,intros; simpl. repeat expand_let_pairs; simpl. ff; repeat find_rewrite; ff. apply before_associative_pairs.,1,Proof
+shuffle_length,"forall es0 es1 es2, shuffle es0 es1 es2 -> length es0 + length es1 = length es2.",1,Lemma
+shuffle_length_proof,intros es0 es1 es2 H. induction H; simpl; auto; lia.,1,Proof
+shuffle_in_left,"forall e es0 es1 es2, shuffle es0 es1 es2 -> In e es0 -> In e es2.",1,Lemma
+shuffle_in_left_proof,intros e es0 es1 es2 H H0. induction H; auto. - inv H0; tauto. - destruct H0. + subst; simpl; auto. + simpl; auto. - apply IHshuffle in H0. simpl; auto.,1,Proof
+shuffle_in_right,"forall e es0 es1 es2, shuffle es0 es1 es2 -> In e es1 -> In e es2.",1,Lemma
+shuffle_in_right_proof,intros e es0 es1 es2 H H0. induction H; auto. - inv H0; tauto. - apply IHshuffle in H0. simpl; auto. - destruct H0. subst; simpl; auto. apply IHshuffle in H0. simpl; auto.,1,Proof
+shuffle_in,"forall e es0 es1 es2, shuffle es0 es1 es2 -> In e es2 <-> In e es0 \/ In e es1.",1,Lemma
+shuffle_in_proof,intros e es0 es1 es2 H. split; intros H0. - induction H; simpl; auto; simpl in H0; destruct H0; auto; apply IHshuffle in H0; tauto. - destruct H0; auto. + eapply shuffle_in_left in H; eauto. + eapply shuffle_in_right in H; eauto.,1,Proof
+shuffle_in_skipn_left,"forall i e es0 es1 es2, shuffle es0 es1 es2 -> In e (skipn i es0) -> In e (skipn i es2).",1,Lemma
+shuffle_in_skipn_left_proof,intros i e es0 es1 es2 H H0. revert H0. revert e. revert i. induction H; intros; auto. - rewrite skipn_nil in H0. inv H0. - destruct i. + simpl in *; auto; destruct H0; auto. specialize IHshuffle with (i:=0). simpl in IHshuffle; auto. + simpl in *; auto. - apply IHshuffle in H0. apply in_skipn_cons; auto.,1,Proof
+shuffle_in_skipn_right,"forall i e es0 es1 es2, shuffle es0 es1 es2 -> In e (skipn i es1) -> In e (skipn i es2).",1,Lemma
+shuffle_in_skipn_right_proof,intros i e es0 es1 es2 H H0. revert H0. revert e. revert i. induction H; intros; auto. - rewrite skipn_nil in H0. inv H0. - apply IHshuffle in H0. apply in_skipn_cons; auto. - destruct i; simpl in *; auto. destruct H0; auto; right. specialize IHshuffle with (i:=0). simpl in *; auto.,1,Proof
+shuffle_earlier_left,"forall es0 es1 es2 e0 e1, earlier es0 e0 e1 -> shuffle es0 es1 es2 -> earlier es2 e0 e1.",1,Lemma
+shuffle_earlier_left_proof,"intros es0 es1 es2 e0 e1 H H0. destruct H as [i H]. destruct H as [H H1]. unfold earlier. revert H. revert H1. revert i. induction H0; intros. - rewrite firstn_nil in H; inv H. - exists i; auto. - destruct i. + simpl in *; tauto. + simpl in H, H1. destruct H; subst. * exists (S i); simpl; auto. split; auto. eapply shuffle_in_skipn_left; eauto. * eapply IHshuffle in H1; eauto. destruct H1 as [n]. destruct H1. exists (S n); simpl; auto. - eapply IHshuffle in H1; eauto. destruct H1 as [n]. destruct H1. exists (S n); simpl; auto.",1,Proof
+shuffle_earlier_right,"forall es0 es1 es2 e0 e1, earlier es1 e0 e1 -> shuffle es0 es1 es2 -> earlier es2 e0 e1.",1,Lemma
+shuffle_earlier_right_proof,"intros. destruct H as [i H]. destruct H. unfold earlier. revert H. revert H1. revert i. induction H0; intros. - exists i; auto. - rewrite firstn_nil in H; inv H. - eapply IHshuffle in H1; eauto. destruct H1 as [n]. destruct H1. exists (S n); simpl; auto. - destruct i. + simpl in *; tauto. + simpl in H, H1. destruct H; subst. * exists (S i); simpl; auto. split; auto. eapply shuffle_in_skipn_right; eauto. * eapply IHshuffle in H1; eauto. destruct H1 as [n]. destruct H1. exists (S n); simpl; auto.",1,Proof
+shuffle_nodup_append,"forall tr0 tr1 tr2, NoDup tr0 -> NoDup tr1 -> disjoint_lists tr0 tr1 -> shuffle tr0 tr1 tr2 -> NoDup tr2.",1,Lemma
+shuffle_nodup_append_proof,intros. induction H2; auto. - apply NoDup_cons. + intro. eapply shuffle_in in H2. apply H2 in H3. destruct H3. * inv H; tauto. * apply H1 in H3; simpl; auto. + apply IHshuffle; auto. * inv H; auto. * unfold disjoint_lists; intros. apply H1 in H4; auto. simpl; auto. - apply NoDup_cons. + intro. eapply shuffle_in in H2. apply H2 in H3. destruct H3. * apply H1 in H3; simpl in H3; auto. * inv H0; tauto. + apply IHshuffle; auto. * inv H0; auto. * unfold disjoint_lists; intros. apply H1 in H3; auto. simpl in H3; auto.,1,Proof
+trace_length,"forall t p e tr, trace t p e tr -> esize t = length tr.",1,Lemma
+trace_length_proof,induction t; intros; inv H; simpl; auto; rewrite app_length; simpl; auto; try (repeat find_eapply_hyp_hyp; try rewrite app_length; simpl in *; try find_apply_lem_hyp shuffle_length; lia).,1,Proof
+trace_events,"forall t p e tr v, well_formed_r_annt t -> trace t p e tr -> In v tr <-> events t p e v.",1,Lemma
+trace_events_proof,split; intros. - induction H0; inv_wfr. + destruct x; do_nodup. + inv_in. constructor; auto. rewrite in_app_iff in *. destruct_disjunct. eauto. inv_in; try solve_by_inversion. apply evtsattrpy. lia. + rewrite in_app_iff in *. destruct_disjunct. * apply evtslseql; auto. * apply evtslseqr; auto. + inv_in; subst; try solve_by_inversion. rewrite in_app_iff in *; destruct_disjunct. apply evtsbseql; auto. rewrite in_app_iff in *; destruct_disjunct. apply evtsbseqr; auto. inv_in; subst; try solve_by_inversion. repeat find_rewrite. apply evtsbseqjoin; auto. + inv_in; subst; try solve_by_inversion. rewrite in_app_iff in *; destruct_disjunct. apply shuffle_in with (e:=v) in H0. destruct H0. repeat concludes. destruct_disjunct. apply evtsbparl; auto. apply evtsbparr; auto. inv_in. repeat find_rewrite. solve_by_inversion. - induction H0; inv H. + inv H1; destruct r as [i j]; simpl in *; auto. + simpl; rewrite in_app_iff; simpl. inv H1; auto. right; right. repeat find_rewrite; simpl; auto. + rewrite in_app_iff. inv H1; auto. + simpl. rewrite in_app_iff. rewrite in_app_iff. simpl. inv H1; auto. repeat find_rewrite. auto. + simpl. rewrite in_app_iff. simpl. inv_events; auto; try (find_apply_hyp_hyp; auto; try (find_eapply_lem_hyp shuffle_in_left; eauto; tauto); try find_eapply_lem_hyp shuffle_in_right; eauto; tauto); try (repeat find_rewrite; auto; tauto).,1,Proof
+trace_range,"forall t p e tr v, well_formed_r_annt t -> trace t p e tr -> In v tr -> fst (range t) <= ev v < snd (range t).",1,Lemma
+trace_range_proof,intros. rewrite trace_events in H1; eauto. eapply events_range; eauto.,1,Proof
+trace_range_event,"forall t p e tr i, well_formed_r_annt t -> trace t p e tr -> fst (range t) <= i < snd (range t) -> exists v, In v tr /\ ev v = i.",1,Lemma
+trace_range_event_proof,intros. eapply events_range_event in H1; eauto. destruct H1 as [v G]; destruct G as [G]; subst. rewrite <- trace_events in G; eauto.,1,Proof
+trace_injective_events,"forall t p e tr v0 v1, well_formed_r_annt t -> trace t p e tr -> In v0 tr -> In v1 tr -> ev v0 = ev v1 -> v0 = v1.",1,Lemma
+trace_injective_events_proof,intros. rewrite trace_events in H1; eauto. rewrite trace_events in H2; eauto. eapply events_injective; eauto.,1,Proof
+nodup_trace,"forall t p e tr, well_formed_r_annt t -> trace t p e tr -> NoDup tr.",1,Lemma
+nodup_trace_proof,induction t; intros; inv_wfr; inv H0. - constructor; auto; constructor. - destruct r as [i j]; simpl in *; subst; simpl. apply NoDup_cons. + intro. rewrite in_app_iff in *. destruct_disjunct. * find_eapply_lem_hyp trace_range; eauto. simpl in *. lia. * inv_in. solve_by_inversion. + apply nodup_append; unfold disjoint_lists; auto; intros. * eapply IHt; eauto. * constructor; auto; constructor. * inv_in. find_eapply_lem_hyp trace_range; eauto. simpl in *. lia. - apply nodup_append; unfold disjoint_lists; auto; intros; eauto. repeat tr_wf. lia. - dest_range'; simpl in *; subst; simpl. apply NoDup_cons. + intro. repeat rewrite in_app_iff in *; repeat destruct_disjunct; try solve_by_inversion. * tr_wf. simpl in *. lia. * repeat tr_wf. simpl in *. repeat find_eapply_lem_hyp well_formed_range_r; auto. lia. * inv_in. solve_by_inversion. + apply nodup_append; unfold disjoint_lists; auto; intros. * eapply IHt1; eauto. * apply nodup_append; unfold disjoint_lists; auto; intros; try eauto; try do_nodup; try (inv_in; repeat tr_wf; simpl in *; lia). * rewrite in_app_iff in *; destruct_disjunct. repeat tr_wf. lia. inv_in. repeat tr_wf. repeat find_eapply_lem_hyp well_formed_range_r; auto. simpl in *. lia. - dest_range'; simpl in *; subst; simpl. apply NoDup_cons. + intro HH. rewrite in_app_iff in *; destruct_disjunct; try (inv_in; solve_by_inversion; tauto). * find_eapply_lem_hyp shuffle_in; eauto. destruct_disjunct; try (inv_in; solve_by_inversion); try solve_by_inversion; try (tr_wf; simpl in * ; lia). -- tr_wf. simpl in *. repeat find_eapply_lem_hyp well_formed_range_r; auto. lia. + apply nodup_append; unfold disjoint_lists; auto; intros. * find_eapply_lem_hyp shuffle_nodup_append; unfold disjoint_lists; auto; intros; eauto. repeat tr_wf. simpl in *. lia. * do_nodup. * inv_in. -- find_eapply_lem_hyp shuffle_in; eauto; destruct_disjunct; repeat tr_wf; simpl in *; try find_eapply_lem_hyp well_formed_range_r; eauto; simpl in * ; lia.,1,Proof
+evsys_tr_in,"forall t p e tr ev0, well_formed_r_annt t -> trace t p e tr -> ev_in ev0 (ev_sys t p e) -> In ev0 tr.",1,Lemma
+evsys_tr_in_proof,intros. induction H0; inv_wfr; simpl in *; try expand_let_pairs; do_evin; simpl; auto; try (left; solve_by_inversion). - rewrite in_app_iff in *. right. do_evin; eauto. do_evin. try (try right; left; solve_by_inversion). - rewrite in_app_iff; auto. - rewrite in_app_iff; auto. - right. rewrite in_app_iff in *. do_evin; auto. + do_evin; auto; eauto. rewrite in_app_iff; auto. + do_evin; auto. (repeat rewrite in_app_iff; right). right. left. auto. - right. do_evin; auto. + do_evin; auto. * repeat find_apply_hyp_hyp. do_shuf_l. rewrite in_app_iff; auto. * find_eapply_hyp_hyp; auto. do_shuf_r. rewrite in_app_iff; auto. + do_evin. rewrite in_app_iff; right; simpl; auto.,1,Proof
+step_pl_eq,"forall st0 ev st1, step st0 ev st1 -> pl st0 = pl st1.",1,Lemma
+step_pl_eq_proof,intros. induction H; simpl; auto.,1,Proof
+step_seval,"forall st0 ev st1, step st0 ev st1 -> seval st0 = seval st1.",1,Lemma
+step_seval_proof,intros. induction H; simpl; auto; try rewrite IHstep; auto. apply step_pl_eq in H. rewrite H; auto.,1,Proof
+lstar_transitive,"forall st0 tr0 st1 tr1 st2, lstar st0 tr0 st1 -> lstar st1 tr1 st2 -> lstar st0 (tr0 ++ tr1) st2.",1,Lemma
+lstar_transitive_proof,intros. induction H. - rewrite app_nil_l; auto. - apply IHlstar in H0. rewrite <- app_comm_cons. eapply lstar_tran; eauto. - apply IHlstar in H0. eapply lstar_silent_tran; eauto.,1,Proof
+star_transitive,"forall st0 st1 st2, star st0 st1 -> star st1 st2 -> star st0 st2.",1,Lemma
+star_transitive_proof,intros. induction H; auto. apply IHstar in H0. eapply star_tran; eauto.,1,Proof
+lstar_star,"forall st0 tr st1, lstar st0 tr st1 -> star st0 st1.",1,Lemma
+lstar_star_proof,intros. induction H; auto; eapply star_tran; eauto.,1,Proof
+star_lstar,"forall st0 st1, star st0 st1 -> exists tr, lstar st0 tr st1.",1,Lemma
+star_lstar_proof,intros. induction H; auto. - exists []; auto. - destruct IHstar as [tr G]. destruct e. + exists (e :: tr). eapply lstar_tran; eauto. + exists tr. eapply lstar_silent_tran; eauto.,1,Proof
+star_seval,"forall st0 st1, star st0 st1 -> seval st0 = seval st1.",1,Lemma
+star_seval_proof,intros. induction H; auto. apply step_seval in H; auto. rewrite H; auto.,1,Proof
+steps_preserves_eval,"forall t p p' e0 e1, star (conf t p e0) (stop p' e1) -> aeval t p e0 = e1.",1,Lemma
+steps_preserves_eval_proof,intros. apply star_seval in H. simpl in H; auto.,1,Proof
+star_strem,"forall st0 st1 j p, star st0 st1 -> star (rem j p st0) (rem j p st1).",1,Lemma
+star_strem_proof,intros. induction H; auto. eapply star_tran; eauto.,1,Proof
+star_stls,"forall st0 st1 t, star st0 st1 -> star (ls st0 t) (ls st1 t).",1,Lemma
+star_stls_proof,intros. induction H; auto. eapply star_tran; eauto.,1,Proof
+star_stbsl,"forall st0 st1 j t p e, star st0 st1 -> star (bsl j st0 t p e) (bsl j st1 t p e).",1,Lemma
+star_stbsl_proof,intros. induction H; auto. eapply star_tran; eauto.,1,Proof
+star_stbsr,"forall st0 st1 j e, star st0 st1 -> star (bsr j e st0) (bsr j e st1).",1,Lemma
+star_stbsr_proof,intros. induction H; auto. eapply star_tran; eauto.,1,Proof
+lstar_stls,"forall st0 st1 t tr, lstar st0 tr st1 -> lstar (ls st0 t) tr (ls st1 t).",1,Lemma
+lstar_stls_proof,intros. induction H; auto. eapply lstar_tran; eauto. eapply lstar_silent_tran; eauto.,1,Proof
+lstar_strem,"forall st st' tr p r, lstar st tr st' -> lstar (rem r p st) tr (rem r p st').",1,Lemma
+lstar_strem_proof,intros. induction H; auto. eapply lstar_tran; eauto. eapply lstar_silent_tran; eauto.,1,Proof
+lstar_stbsl,"forall st0 st1 j t p e tr, lstar st0 tr st1 -> lstar (bsl j st0 t p e) tr (bsl j st1 t p e).",1,Lemma
+lstar_stbsl_proof,intros. induction H; auto. eapply lstar_tran; eauto. eapply lstar_silent_tran; eauto.,1,Proof
+lstar_stbsr,"forall st0 st1 j e tr, lstar st0 tr st1 -> lstar (bsr j e st0) tr (bsr j e st1).",1,Lemma
+lstar_stbsr_proof,intros. induction H; auto. eapply lstar_tran; eauto. eapply lstar_silent_tran; eauto.,1,Proof
+lstar_stbparl,"forall st0 st1 st2 j tr, lstar st0 tr st1 -> lstar (bp j st0 st2) tr (bp j st1 st2).",1,Lemma
+lstar_stbparl_proof,intros. induction H; auto. eapply lstar_tran; eauto. eapply lstar_silent_tran; eauto.,1,Proof
+lstar_stbparr,"forall st0 st1 st2 j tr, lstar st1 tr st2 -> lstar (bp j st0 st1) tr (bp j st0 st2).",1,Lemma
+lstar_stbparr_proof,intros. induction H; auto. eapply lstar_tran; eauto. eapply lstar_silent_tran; eauto.,1,Proof
+star_stbp,"forall st0 st1 st2 st3 j, star st0 st1 -> star st2 st3 -> star (bp j st0 st2) (bp j st1 st3).",1,Lemma
+star_stbp_proof,intros. induction H; auto. - induction H0; auto. eapply star_tran; eauto. - eapply star_tran; eauto.,1,Proof
+nstar_transitive,"forall m n st0 st1 st2, nstar m st0 st1 -> nstar n st1 st2 -> nstar (m + n) st0 st2.",1,Lemma
+nstar_transitive_proof,induction t; intros; simpl; eauto. - eapply star_tran; eauto. - eapply star_tran; eauto. eapply star_transitive. apply star_strem. apply IHt. eapply star_tran; eauto. - eapply star_tran; eauto. eapply star_transitive. apply star_stls. apply IHt1. eapply star_tran; eauto. - eapply star_tran; eauto. eapply star_transitive. apply star_stbsl. apply IHt1. eapply star_tran; eauto. eapply star_transitive. apply star_stbsr. apply IHt2. eapply star_tran; eauto. - repeat dest_range. eapply star_tran; eauto. eapply star_transitive. apply star_stbp. apply IHt1. apply IHt2. eapply star_tran; eauto.,1,Proof
+nstar_star,"forall n st0 st1, nstar n st0 st1 -> star st0 st1.",1,Lemma
+nstar_star_proof,induction st0. - left; simpl; auto. - right. destruct a. + exists (Some (asp_event (fst r) a p e)). eapply ex_intro; eauto. + exists (Some (req (fst r) p p0 (unanno a) e)). repeat dest_range. eapply ex_intro; eauto. + exists None. eapply ex_intro; eauto. + exists (Some (split (fst r) p)). eapply ex_intro; eauto. + exists (Some (Term_Defs.split(fst r) p)). repeat dest_range. eapply ex_intro; eauto. - right. destruct IHst0. + destruct st0; simpl in H; try tauto. exists (Some (rpy (pred n) p p0 e)). eapply ex_intro; eauto. + destruct H as [e H]. exists e. destruct H as [st1 H]. exists (rem n p st1); auto. - right. destruct IHst0. + destruct st0; simpl in H; try tauto. exists None. eapply ex_intro; eauto. + destruct H as [e H]. exists e. destruct H as [st H]. exists (ls st a). auto. - right. destruct IHst0. + destruct st0; simpl in H; try tauto. exists None. eapply ex_intro; eauto. + destruct H as [e0 H]. exists e0. destruct H as [st H]. exists (bsl n st a p e). auto. - right. destruct IHst0. + destruct st0; simpl in H; try tauto. exists (Some (join (pred n) p)). eapply ex_intro; eauto. + destruct H as [e0 H]. exists e0. destruct H as [st H]. exists (bsr n e st). auto. - right. destruct IHst0_1 as [H|H]. + destruct st0_1; simpl in H; try tauto. clear H. destruct IHst0_2. * destruct st0_2; simpl in H; try tauto. exists (Some (join (pred n) p0)). eapply ex_intro; eauto. * destruct H as [e0 H]. exists e0. destruct H as [st H]. exists (bp n (stop p e) st). auto. + destruct H as [e0 H]. exists e0. destruct H as [st H]. exists (bp n st st0_2). auto.,1,Proof
+star_nstar,"forall st0 st1, star st0 st1 -> exists n, nstar n st0 st1.",1,Lemma
+star_nstar_proof,intros. induction H0. rewrite Nat.add_0_r; auto. apply IHnstar in H. eapply nstar_tran in H; eauto. rewrite plus_n_Sm in H. eauto.,1,Proof
+halt_size,"forall st, halt st <-> ssize st = 0.",1,Lemma
+halt_size_proof,intros. induction H; auto. eapply star_transitive; eauto. eapply star_tran; eauto.,1,Proof
+step_size,"forall st0 e st1, step st0 e st1 -> S (ssize st1) = ssize st0.",1,Lemma
+step_size_proof,intros. induction H. - exists 0; auto. - destruct IHstar as [n G]. exists (S n). rewrite <- Nat.add_1_l. eapply nstar_transitive; eauto. eapply nstar_tran; eauto.,1,Proof
+step_count,"forall n t p e st, nstar n (conf t p e) st -> tsize t = n + ssize st.",1,Lemma
+step_count_proof,split; intros. - destruct st; simpl in H; try tauto. - destruct st; simpl in H; try tauto; try discriminate. + simpl; auto. + destruct a; simpl in H; discriminate.,1,Proof
+nlstar_transitive,"forall m n st0 tr0 st1 tr1 st2, nlstar m st0 tr0 st1 -> nlstar n st1 tr1 st2 -> nlstar (m + n) st0 (tr0 ++ tr1) st2.",1,Lemma
+nlstar_transitive_proof,intros. induction H; simpl; auto; lia.,1,Proof
+nlstar_lstar,"forall n st0 tr st1, nlstar n st0 tr st1 -> lstar st0 tr st1.",1,Lemma
+nlstar_lstar_proof,induction n; intros. - inv H; simpl; auto. - inv H. apply IHn in H1. rewrite H1. apply step_size in H2. lia.,1,Proof
+lstar_nlstar,"forall st0 tr st1, lstar st0 tr st1 -> exists n, nlstar n st0 tr st1.",1,Lemma
+lstar_nlstar_proof,intros. apply step_count in H. apply halt_size. lia.,1,Proof
+nlstar_step_size,"forall n st0 tr st1, nlstar n st0 tr st1 -> ssize st1 <= ssize st0.",1,Lemma
+nlstar_step_size_proof,intros. induction H. - rewrite app_nil_l; auto. - apply IHnlstar in H0. rewrite <- app_comm_cons. eapply nlstar_tran; eauto. - apply IHnlstar in H0. eapply nlstar_silent_tran; eauto.,1,Proof
+lstar_nlstar_size,"forall st0 tr st1, lstar st0 tr st1 -> nlstar (ssize st0 - ssize st1) st0 tr st1.",1,Lemma
+lstar_nlstar_size_proof,intros. induction H; auto. - eapply lstar_tran; eauto. - eapply lstar_silent_tran; eauto.,1,Proof
+rlstar_transitive,"forall m n st0 tr0 st1 tr1 st2, rlstar m st0 tr0 st1 -> rlstar n st1 tr1 st2 -> rlstar (m + n) st0 (tr0 ++ tr1) st2.",1,Lemma
+rlstar_transitive_proof,intros. induction H. - exists 0; auto. - destruct IHlstar as [n G]. exists (S n). eapply nlstar_tran; eauto. - destruct IHlstar as [n G]. exists (S n). eapply nlstar_silent_tran; eauto.,1,Proof
+rlstar_lstar,"forall n st0 tr st1, rlstar n st0 tr st1 -> lstar st0 tr st1.",1,Lemma
+rlstar_lstar_proof,intros. induction H; auto; apply step_size in H; lia.,1,Proof
+lstar_rlstar,"forall st0 tr st1, lstar st0 tr st1 -> exists n, rlstar n st0 tr st1.",1,Lemma
+lstar_rlstar_proof,intros. induction H. - rewrite Nat.sub_diag; auto. - pose proof H as G. apply step_size in G. rewrite <- G. rewrite <- minus_Sn_m. + eapply nlstar_tran; eauto. + apply nlstar_step_size in IHlstar; auto. - pose proof H as G. apply step_size in G. rewrite <- G. rewrite <- minus_Sn_m. + eapply nlstar_silent_tran; eauto. + apply nlstar_step_size in IHlstar; auto.,1,Proof
+rlstar_nlstar,"forall n st0 tr st1, rlstar n st0 tr st1 <-> nlstar n st0 tr st1.",1,Lemma
+rlstar_nlstar_proof,intros. induction H0. - rewrite Nat.add_0_r; rewrite app_nil_r; simpl; auto. - apply IHrlstar in H. rewrite Nat.add_succ_r. rewrite app_assoc. eapply rlstar_tran; eauto. - apply IHrlstar in H. rewrite Nat.add_succ_r. eapply rlstar_silent_tran; eauto.,1,Proof
+esize_tr,"forall t p e tr, trace t p e tr -> length tr = esize t.",1,Lemma
+esize_tr_proof,"Allowed. Inductive traceS: St -> list Ev -> Prop := | tstop: forall p e, traceS (stop p e) [] | tconf: forall t tr p e, trace t p e tr -> traceS (conf t p e) tr | trem: forall st tr j p, traceS st tr -> traceS (rem j p st) (tr ++ [(rpy (pred j) p (pl st) (seval st))]) | tls: forall st tr1 t tr2, traceS st tr1 -> trace t (pl st) (seval st) tr2 -> traceS (ls st t) (tr1 ++ tr2) | tbsl: forall st tr1 t p e tr2 j, traceS st tr1 -> trace t p e tr2 -> traceS (bsl j st t p e) (tr1 ++ tr2 ++ [(join (pred j) p )]) | tbsr: forall st tr j e, traceS st tr -> traceS (bsr j e st) (tr ++ [(join (pred j) (pl st) )]) | tbp: forall st1 tr1 st2 tr2 tr3 j, traceS st1 tr1 -> traceS st2 tr2 -> shuffle tr1 tr2 tr3 -> traceS (bp j st1 st2) (tr3 ++ [(join (pred j) (pl st2))]). #[export] Hint Constructors traceS : core. Fixpoint esizeS s:= match s with | stop _ _ => 0 | conf t _ _ => esize t | rem _ _ st => 1 + esizeS st | ls st t => esizeS st + esize t | bsl _ st t _ _ => 1 + esizeS st + esize t | bsr _ _ st => 1 + esizeS st | bp _ st1 st2 => 1 + esizeS st1 + esizeS st2 end. Ltac inv_trace := match goal with | H:trace (?C _) _ _ _ |- _ => inv H end. Lemma esize_tr: forall t p e tr, trace t p e tr -> length tr = esize t. Proof. induction t; intros; inv_trace; simpl; autorewrite with list; simpl; auto; try ( try find_apply_lem_hyp shuffle_length; repeat find_apply_hyp_hyp; lia).",1,Proof
+esizeS_tr,"forall st tr, traceS st tr -> length tr = esizeS st.",1,Lemma
+esizeS_tr_proof,induction st; intros; inv_traceS; simpl; auto; try (destruct a; find_apply_lem_hyp esize_tr; tauto); repeat find_apply_lem_hyp esize_tr; repeat (rewrite app_length; simpl); repeat find_apply_hyp_hyp; repeat find_apply_lem_hyp shuffle_length; try lia.,1,Proof
+step_silent_tr,"forall st st' tr, step st None st' -> traceS st' tr -> traceS st tr.",1,Lemma
+step_silent_tr_proof,induction st; intros; inv H; inv H0. - constructor. constructor; auto. solve_by_inversion. - find_copy_apply_lem_hyp step_pl_eq. find_copy_apply_lem_hyp step_seval. jkjke'. jkjke'. - constructor. eauto. find_apply_lem_hyp step_pl_eq. find_copy_apply_lem_hyp step_seval. cbn in *. invc H. repeat find_rewrite. assert (traceS st tr1) by eauto. assert (seval st = seval st1). { eapply step_seval. eassumption. } repeat find_rewrite. eauto. - erewrite <- app_nil_l. constructor; auto. - eauto. - erewrite <- app_nil_l. apply tbsl; auto; simpl; auto. invc H. invc H5. eauto. - find_eapply_hyp_hyp; eauto. find_copy_apply_lem_hyp step_seval. find_copy_apply_lem_hyp step_pl_eq. jkjke'. - eauto. - find_copy_apply_hyp_hyp; eauto. find_copy_apply_lem_hyp step_seval. find_copy_apply_lem_hyp step_pl_eq. jkjke'.,1,Proof
+step_evt_tr,"forall st st' ev tr, step st (Some ev) st' -> traceS st' tr -> traceS st (ev::tr).",1,Lemma
+step_evt_tr_proof,induction st; intros; inv H; inv H0. - constructor. constructor. - constructor. apply tatt. simpl. solve_by_inversion. - constructor. apply tbseq; auto. solve_by_inversion. - constructor. eapply tbpar; eauto; solve_by_inversion. - find_copy_apply_lem_hyp step_seval. find_copy_apply_lem_hyp step_pl_eq. jkjke'. jkjke'. rewrite app_comm_cons; eauto. - rewrite <- app_nil_l. econstructor; eauto. - find_copy_apply_lem_hyp step_seval. find_copy_apply_lem_hyp step_pl_eq. rewrite app_comm_cons; auto. apply tls; try jkjk; eauto. repeat find_rewrite. eauto. - find_copy_apply_lem_hyp step_seval. rewrite app_comm_cons; auto. eauto. - find_copy_apply_lem_hyp step_seval. find_copy_apply_lem_hyp step_pl_eq. rewrite app_comm_cons. jkjke'. - rewrite <- app_nil_l; constructor; auto. - find_copy_apply_lem_hyp step_seval. rewrite app_comm_cons. find_eapply_lem_hyp shuffle_left. eapply tbp; eauto. - find_copy_apply_lem_hyp step_seval. find_copy_apply_lem_hyp step_pl_eq. rewrite app_comm_cons. find_eapply_lem_hyp shuffle_right. jkjke'. - rewrite <- app_nil_l; auto. eapply tbp; eauto.,1,Proof
+nlstar_trace_helper,"forall e p n st0 tr st1, step st0 e st1 -> nlstar n st1 tr (stop p (seval st0)) -> nlstar n st1 tr (stop p (seval st1)).",1,Lemma
+nlstar_trace_helper_proof,intros e p n st0 tr st1 H G. apply step_seval in H. rewrite <- H. auto.,1,Proof
+nlstar_trace,"forall n p st tr, nlstar n st tr (stop p (seval st)) -> traceS st tr.",1,Lemma
+nlstar_trace_proof,induction n; intros; inv H; auto; eapply nlstar_trace_helper in H2; eauto; apply IHn in H2; auto. - eapply step_evt_tr; eauto. - eapply step_silent_tr; eauto.,1,Proof
+lstar_trace,"forall t p e tr, well_formed_r_annt t -> lstar (conf t p e) tr (stop p (aeval t p e)) -> trace t p e tr.",1,Lemma
+lstar_trace_proof,intros. apply lstar_nlstar in H0. destruct H0. apply nlstar_trace in H0. inv H0; auto.,1,Proof
+evsubT_transitive,"forall e e' e'', EvSubT e e' -> EvSubT e' e'' -> EvSubT e e''.",1,Lemma
+evsubT_transitive_proof,intros. generalizeEverythingElse e''. induction e''; intros; try evSubTFacts; eauto.,1,Proof
+evsub_etfun,"forall e e', EvSub e e' -> EvSubT (et_fun e) (et_fun e').",1,Lemma
+evsub_etfun_proof,intros. induction H; intros; cbn in *; eauto.,1,Proof
+evsub_hh,"forall e e' e0, EvSub e0 e' -> EvSubT (et_fun e') e -> EvSubT (et_fun e0) e.",1,Lemma
+evsub_hh_proof,intros. generalizeEverythingElse e. induction e; intros; ff. - invc H0. jkjke. assert (e' = mtc). { destruct e'; try solve_by_inversion. } subst. ff. - invc H0. jkjke. destruct e'; try solve_by_inversion. ff. - invc H0. + destruct f. ++ destruct e'; ff. ++ destruct e'; ff. ++ destruct e'; ff. invc H; ff; eauto. ++ destruct e'; ff. ++ destruct e'; ff. + eauto. - invc H0. + destruct e'; ff. invc H; ff; eauto. + eauto. + eauto.,1,Proof
+evsub_transitive,"forall e e' e'', EvSub e e' -> EvSub e' e'' -> EvSub e e''.",1,Lemma
+evsub_transitive_proof,intros e e' e'' H H0. generalizeEverythingElse e''. induction e''; intros; ff; invc H0; eauto.,1,Proof
+always_some,"forall t vm_st vm_st' op, build_cvm t vm_st = (op, vm_st') -> op = Some tt.",1,Lemma
+always_some_proof,induction t; intros. - destruct a; try destruct a; try (df; tauto). - repeat (df; try dohtac; df). tauto. - df. destruct o eqn:hhh; try (df; eauto). - df. repeat break_match; try ( df; eauto). - df. dohtac. df. simpl. assert (o = Some tt) by eauto. subst. vmsts. df. tauto.,1,Proof
+pl_immut,"forall t e tr p i, st_pl (execSt (build_cvm t) {| st_ev := e; st_trace := tr; st_pl := p; st_evid := i|}) = p.",1,Lemma
+pl_immut_proof,induction t; intros. - destruct a; try destruct a; try reflexivity. - df. reflexivity. - simpl in *. monad_unfold. repeat break_match; try solve_by_inversion. df. annogo. simpl. assert (p = st_pl0). { edestruct IHt1. jkjke. } assert (st_pl0 = st_pl). { edestruct IHt2. jkjk_s. } congruence. - annogo. df. repeat break_match; try solve_by_inversion; repeat find_inversion; repeat dunit; simpl in *; vmsts; simpl in *. + assert (p = st_pl0). { edestruct IHt1. jkjk_s; eauto. } assert (st_pl0 = st_pl). { edestruct IHt2. jkjk_s; eauto. } congruence. + assert (p = st_pl). { edestruct IHt1. jkjk_s; eauto. } assert (st_pl = st_pl0). { edestruct IHt2. jkjk_s; eauto. } congruence. + symmetry. edestruct IHt1. jkjk_s; eauto. + symmetry. edestruct IHt1. jkjk_s; eauto. - annogo. df. repeat break_let. repeat break_match; try solve_by_inversion; repeat find_inversion; repeat dunit; simpl in * ; vmsts; simpl in *. + assert (p = st_pl). { edestruct IHt1. jkjke. } congruence. + assert (p = st_pl). { edestruct IHt1. jkjke. } congruence.,1,Proof
+st_congr,"forall st tr e p i, st_ev st = e -> st_trace st = tr -> st_pl st = p -> st_evid st = i -> st = {| st_ev := e; st_trace := tr; st_pl := p; st_evid := i |}.",1,Lemma
+st_congr_proof,intros. subst; destruct st; auto.,1,Proof
+st_trace_irrel,"forall t e e' e'' x x' y y' p p' p'' i i' i'', build_cvm t {| st_ev := e; st_trace := x; st_pl := p; st_evid := i |} = (Some tt, {| st_ev := e'; st_trace := x'; st_pl := p'; st_evid := i' |}) -> build_cvm t {| st_ev := e; st_trace := y; st_pl := p; st_evid := i |} = (Some tt, {| st_ev := e''; st_trace := y'; st_pl := p''; st_evid := i'' |}) -> (e' = e'' /\ p' = p'' /\ i' = i'').",1,Lemma
+st_trace_irrel_proof,induction t; intros. - destruct a; try destruct a; df; eauto. - repeat (df; try dohtac; df). tauto. - df; repeat break_match; try (repeat find_inversion); simpl in *. df. anhl. eauto. - df; repeat break_match; try (repeat find_inversion); simpl in *. df. repeat anhl. repeat find_inversion. eauto. - cbn in *. monad_unfold. repeat break_let. simpl in *. dosome. df. dosome. dosome. df. annogo. simpl in *. repeat anhl. repeat (find_inversion). repeat find_rewrite. df. tauto.,1,Proof
+trace_irrel_pl,"forall t tr1 tr1' tr2 e e' p1' p1 i i', build_cvm t {| st_ev := e; st_trace := tr1; st_pl := p1; st_evid := i |} = (Some tt, {| st_ev := e'; st_trace := tr1'; st_pl := p1'; st_evid := i' |}) -> st_pl (execSt (build_cvm t) {| st_ev := e; st_trace := tr2; st_pl := p1; st_evid := i |}) = p1'.",1,Lemma
+trace_irrel_pl_proof,intros. destruct (build_cvm t {| st_ev := e; st_trace := tr2; st_pl := p1; st_evid := i |}) eqn:ff. simpl. vmsts. simpl. do_asome. subst. dohi. df. tauto.,1,Proof
+trace_irrel_ev,"forall t tr1 tr1' tr2 e e' p1' p1 i i', build_cvm t {| st_ev := e; st_trace := tr1; st_pl := p1; st_evid := i|} = (Some tt, {| st_ev := e'; st_trace := tr1'; st_pl := p1'; st_evid := i' |}) -> st_ev (execSt (build_cvm t) {| st_ev := e; st_trace := tr2; st_pl := p1; st_evid := i |}) = e'.",1,Lemma
+trace_irrel_ev_proof,intros. destruct (build_cvm t {| st_ev := e; st_trace := tr2; st_pl := p1; st_evid := i |}) eqn:ff. simpl. vmsts. simpl. do_asome. subst. dohi. df. tauto.,1,Proof
+trace_irrel_evid,"forall t tr1 tr1' tr2 e e' p1' p1 i i', build_cvm t {| st_ev := e; st_trace := tr1; st_pl := p1; st_evid := i|} = (Some tt, {| st_ev := e'; st_trace := tr1'; st_pl := p1'; st_evid := i' |}) -> st_evid (execSt (build_cvm t) {| st_ev := e; st_trace := tr2; st_pl := p1; st_evid := i |}) = i'.",1,Lemma
+trace_irrel_evid_proof,intros. destruct (build_cvm t {| st_ev := e; st_trace := tr2; st_pl := p1; st_evid := i |}) eqn:ff. simpl. vmsts. simpl. do_asome. subst. dohi. df. tauto.,1,Proof
+ccp_implies_cc,"forall t st st' res, build_cvmP t st res st' -> build_cvm t st = (res,st').",1,Lemma
+ccp_implies_cc_proof,intros. solve_by_inversion.,1,Proof
+cc_implies_ccp,"forall t st st' res, build_cvm t st = (res,st') -> build_cvmP t st res st'.",1,Lemma
+cc_implies_ccp_proof,intros. econstructor. tauto.,1,Proof
+ccp_iff_cc,"forall t st st' res, build_cvm t st = (res,st') <-> build_cvmP t st res st'.",1,Lemma
+ccp_iff_cc_proof,intros. split; intros; try (eapply cc_implies_ccp; eauto); try (eapply ccp_implies_cc; eauto).,1,Proof
+term_to_coreP_redo,"forall t t', copland_compile t = t' -> term_to_coreP t t'.",1,Lemma
+term_to_coreP_redo_proof,intros. econstructor. eauto.,1,Proof
+annoP_redo,"forall t annt n n', anno t n = (n', annt) -> annoP annt t.",1,Lemma
+annoP_redo_proof,intros. econstructor. eexists. jkjke.,1,Proof
+annoP_indexed_redo,"forall t annt n n', anno t n = (n', annt) -> annoP_indexed annt t n n'.",1,Lemma
+annoP_indexed_redo_proof,intros. econstructor. jkjke.,1,Proof
+firstn_long,"forall (e:list BS) x, length e >= x -> length (firstn x e) = x.",1,Lemma
+firstn_long_proof,intros. eapply firstn_length_le. lia.,1,Proof
+skipn_long,"forall (e:list BS) x y, length e = x + y -> length (skipn x e) = y.",1,Lemma
+skipn_long_proof,intros. assert (length (skipn x e) = length e - x). { eapply skipn_length. } lia.,1,Proof
+peel_fact,"forall e x y H et, length e = S x -> peel_bs e = Some (y, H) -> et_size et = x -> wf_ec (evc H et).",1,Lemma
+peel_fact_proof,intros. destruct e; ff; eauto.,1,Proof
+inv_recon_mt,"forall ls et, reconstruct_evP (evc ls et) mtc -> (et = mt) .",1,Lemma
+inv_recon_mt_proof,intros. econstructor. eapply peel_fact'; eauto. lia.,1,Proof
+inv_recon_nn,"forall ls et n n0, reconstruct_evP (evc ls et) (nnc n n0) -> ((et = nn n /\ ls = [n0]) ).",1,Lemma
+inv_recon_nn_proof,intros. invc H. destruct et; repeat ff; try (unfold OptMonad_Coq.bind in *); repeat ff; try solve_by_inversion. - eauto.,1,Proof
+inv_recon_gg,"forall p ps ls et n ec, reconstruct_evP (evc ls et) (ggc p ps n ec) -> (exists ls' et', et = uu p EXTD ps et' /\ ls = n :: ls') .",1,Lemma
+inv_recon_gg_proof,intros. invc H. repeat ff; try solve_by_inversion; eauto.,1,Proof
+inv_recon_hh,"forall p ps ls et n et', reconstruct_evP (evc ls et) (hhc p ps n et') -> ((et = uu p COMP ps et' ) /\ ls = [n]) .",1,Lemma
+inv_recon_hh_proof,intros. invc H. destruct et; repeat ff; try (unfold OptMonad_Coq.bind in *); repeat ff; destruct ls; try solve_by_inversion.,1,Proof
+inv_recon_ee,"forall p ps ls et n ec', reconstruct_evP (evc ls et) (eec p ps n ec') -> (exists et', et = uu p ENCR ps et' /\ ls = [n]) .",1,Lemma
+inv_recon_ee_proof,intros. invc H. destruct et; repeat ff; try (unfold OptMonad_Coq.bind in *); repeat ff; try solve_by_inversion. - repeat eexists. destruct ls; ff.,1,Proof
+inv_recon_ss,"forall ls et ec1 ec2, reconstruct_evP (evc ls et) (ssc ec1 ec2) -> (exists et1 et2, et = ss et1 et2) .",1,Lemma
+inv_recon_ss_proof,intros. invc H. destruct et; repeat ff; try (unfold OptMonad_Coq.bind in *); repeat ff; destruct ls; try solve_by_inversion.,1,Proof
+recon_inv_gg,"forall sig ls p ps et e, reconstruct_evP (evc (sig :: ls) (uu p EXTD ps et)) (ggc p ps sig e) -> reconstruct_evP (evc ls et) e.",1,Lemma
+recon_inv_gg_proof,intros. invc H. destruct et; repeat ff; try (unfold OptMonad_Coq.bind in *); repeat ff; destruct ls; try solve_by_inversion. - repeat eexists. ff.,1,Proof
+recon_inv_ss,"forall ls H1 H2 ec1 ec2, reconstruct_evP (evc ls (ss H1 H2)) (ssc ec1 ec2) -> reconstruct_evP (evc (firstn (et_size H1) ls) H1) ec1 /\ reconstruct_evP (evc (skipn (et_size H1) ls) H2) ec2.",1,Lemma
+recon_inv_ss_proof,intros. invc H. destruct et; repeat ff; try (unfold OptMonad_Coq.bind in *); repeat ff; try solve_by_inversion. - eauto.,1,Proof
+wrap_reconP,"forall ec e, reconstruct_ev ec = Some e -> reconstruct_evP ec e.",1,Lemma
+wrap_reconP_proof,intros. invc H. repeat ff; try (unfold OptMonad_Coq.bind in *); repeat ff; econstructor. symmetry. tauto.,1,Proof
+fold_recev,"forall e0 e1, reconstruct_ev' e0 e1 = reconstruct_ev (evc e0 e1).",1,Lemma
+fold_recev_proof,intros. invc H. repeat ff; try (unfold OptMonad_Coq.bind in *); repeat ff; split; econstructor; try symmetry; eassumption.,1,Proof
+etfun_reconstruct,"forall e e0 e1, reconstruct_evP (evc e0 e1) e -> e1 = et_fun e .",1,Lemma
+etfun_reconstruct_proof,intros. econstructor. congruence.,1,Proof
+wfec_split,"forall e s, wf_ec e -> wf_ec (splitEv_l s e) /\ wf_ec (splitEv_r s e).",1,Lemma
+wfec_split_proof,ff. tauto.,1,Proof
+recon_encodeEv,"forall bits et ec, reconstruct_evP (evc bits et) ec -> encodeEv ec = bits.",1,Lemma
+recon_encodeEv_proof,intros. generalizeEverythingElse e1. induction e1; intros e e0 H. - invc H. ff. tauto. - invc H. repeat ff; try (unfold OptMonad_Coq.bind in * ); repeat ff. - destruct f; ff. + invc H. repeat ff; try (unfold OptMonad_Coq.bind in * ); repeat ff. + invc H. unfold reconstruct_ev in *. unfold reconstruct_ev' in *. unfold OptMonad_Coq.bind in *. repeat ff; try (unfold OptMonad_Coq.bind in * ); repeat ff. + invc H. ff. repeat ff; try (unfold OptMonad_Coq.bind in * ); repeat ff. assert (e1 = et_fun e2 ). { eapply IHe1. econstructor. ff. } congruence. + invc H. unfold reconstruct_ev in *. ff. + invc H. unfold reconstruct_ev in *. ff. repeat ff; try (unfold OptMonad_Coq.bind in * ); repeat ff. assert (e1 = et_fun e2). { eapply IHe1. econstructor. unfold reconstruct_ev. symmetry. eassumption. } subst. tauto. - invc H. ff. repeat ff; try (unfold OptMonad_Coq.bind in * ); repeat ff. assert (e1_1 = et_fun e1). { eapply IHe1_1. econstructor. symmetry. eassumption. } assert (e1_2 = et_fun e2). { eapply IHe1_2. econstructor. symmetry. eassumption. } congruence.,1,Proof
+recon_encodeEv_Raw,"forall ec bits et, reconstruct_evP (evc bits et) ec -> encodeEvRaw (encodeEv ec) = encodeEvBits (evc bits et).",1,Lemma
+recon_encodeEv_Raw_proof,intros. split; destruct s; ff; try unfold mt_evc; ff; econstructor; ff.,1,Proof
+wfec_recon,"forall (ee:EvC) (ec:EvidenceC), reconstruct_evP ee ec -> wf_ec ee.",1,Lemma
+wfec_recon_proof,"intros. generalizeEverythingElse ec. induction ec; intros. - dd. do_inv_recon. invc H. repeat ff. - do_inv_recon. ff. - do_inv_recon. ff. invc H. repeat ff. unfold OptMonad_Coq.bind in *. ff. assert (reconstruct_evP (evc H0 H1) e). { econstructor; eauto. } assert (encodeEv e = H0) by eauto. congruence. - do_inv_recon. ff. - do_inv_recon. ff. - do_inv_recon. ff. invc H. ff. unfold reconstruct_ev' in *. ff. unfold OptMonad_Coq.bind in *. ff. rewrite fold_recev in *. unfold reconstruct_ev in *. unfold reconstruct_ev' in *. destruct et; try solve_by_inversion. ff. unfold OptMonad_Coq.bind in *. ff. unfold OptMonad_Coq.bind in *. ff. unfold OptMonad_Coq.bind in *. ff. - ff. assert (exists et', et = uu p KEEP a et'). { destruct et; try solve_by_inversion. + invc H. ff. + invc H. ff. repeat ff; try (unfold OptMonad_Coq.bind in * ); repeat ff. + invc H. ff. repeat ff; try (unfold OptMonad_Coq.bind in * ); repeat ff. repeat ff; try (unfold OptMonad_Coq.bind in * ); repeat ff. repeat ff; try (unfold OptMonad_Coq.bind in * ); repeat ff. repeat ff; try (unfold OptMonad_Coq.bind in * ); repeat ff. eexists. tauto. + invc H. ff. repeat ff; try (unfold OptMonad_Coq.bind in * ); repeat ff. } destruct_conjs. subst. invc H. ff. repeat ff; try (unfold OptMonad_Coq.bind in * ); repeat ff. eapply IHec. econstructor. ff. - do_inv_recon. ff. invc H. ff. unfold OptMonad_Coq.bind in *. ff. rewrite fold_recev in *. do_wrap_reconP. assert (encodeEv e = (firstn (et_size H0) bits)) by eauto. assert (encodeEv e0 = (skipn (et_size H0) bits)) by eauto. assert (bits = firstn (et_size H0) bits ++ skipn (et_size H0) bits). { symmetry. eapply firstn_skipn. } rewrite H3 at 1. congruence.",1,Proof
+reconP_determ,"forall ec e e', reconstruct_evP ec e -> reconstruct_evP ec e' -> e = e'.",1,Lemma
+reconP_determ_proof,intros. unfold encodeEvBits. erewrite recon_encodeEv. tauto. eauto.,1,Proof
+some_recons,"forall (e:EvC), wf_ec e -> exists (ee:EvidenceC), Some ee = reconstruct_ev e.",1,Lemma
+some_recons_proof,intros. generalizeEverythingElse ec. induction ec; intros; destruct ee. - do_inv_recon. dd. invc H. dd. ff. econstructor. tauto. - do_inv_recon. invc H. dd. econstructor; tauto. - do_inv_recon. invc H. dd. ff. unfold OptMonad_Coq.bind in *. ff. assert (wf_ec (evc H0 H1)). { apply IHec. econstructor. eauto. } econstructor. dd. invc H. lia. - do_inv_recon. invc H. dd. econstructor; tauto. - do_inv_recon. invc H. dd. econstructor; tauto. - invc H. unfold reconstruct_ev in *. unfold reconstruct_ev' in *. destruct e0; try solve_by_inversion. ff. unfold OptMonad_Coq.bind in *. ff. unfold OptMonad_Coq.bind in *. ff. econstructor. ff. unfold OptMonad_Coq.bind in *. ff. - invc H. destruct e; try solve_by_inversion. + ff. + ff. repeat ff; try (unfold OptMonad_Coq.bind in * ); repeat ff. + repeat ff; try (unfold OptMonad_Coq.bind in * ); repeat ff. assert (wf_ec (evc r e)). { eapply IHec. econstructor. symmetry. eassumption. } econstructor. ff. + ff. repeat ff; try (unfold OptMonad_Coq.bind in * ); repeat ff. - do_inv_recon. invc H. dd. ff. unfold OptMonad_Coq.bind in *. ff. assert (wf_ec (evc (firstn (et_size H0) r) H0)). { apply IHec1. econstructor. eauto. } assert (wf_ec (evc (skipn (et_size H0) r) H1)). { apply IHec2. econstructor. eauto. } econstructor. dd. invc H. invc H2. rewrite <- H4. rewrite <- H3. assert (r = firstn (et_size H0) r ++ skipn (et_size H0) r). { symmetry. eapply firstn_skipn. } rewrite H at 1. eapply app_length.,1,Proof
+some_reconsP,"forall e, wf_ec e -> exists ee, reconstruct_evP e ee.",1,Lemma
+some_reconsP_proof,intros. invc H; invc H0. repeat jkjke'. ff.,1,Proof
+event_id_spans_same,"forall t, event_id_span' t = event_id_span (copland_compile t).",1,Lemma
+event_id_spans_same_proof,intros. destruct e; ff; eauto.,1,Proof
+cvm_spans,"forall t pt e tr p i e' tr' p' i', term_to_coreP t pt -> build_cvmP pt {| st_ev := e; st_trace := tr; st_pl := p; st_evid := i |} (Some tt) {| st_ev := e'; st_trace := tr'; st_pl := p'; st_evid := i' |} -> i' = i + event_id_span' t.",1,Lemma
+cvm_spans_proof,"intros. destruct e. generalizeEverythingElse e. induction e; intros. - try (repeat ff; eauto; tauto). try ( inv_wfec; ff; do_some_recons'); try ( repeat do_rcih; destruct_conjs; repeat jkjke'); try ( inv_wfec; ff; repeat do_rcih; destruct_conjs; repeat jkjke'; repeat ff; eauto). - repeat ff. (unfold OptMonad_Coq.bind in * ). repeat ff. + eauto. + inv_wfec. ff. destruct r; try solve_by_inversion. ff. unfold OptMonad_Coq.ret in *. repeat ff. + destruct r; try solve_by_inversion. ff. invc H. ff. - destruct f. + inv_wfec. ff. repeat ff; (unfold OptMonad_Coq.bind in * ); repeat ff; eauto. ++ ff. assert (exists v, r = [v]). { destruct r; ff. destruct r; ff. } destruct_conjs. subst. ff. ++ assert (exists v, r = [v]). { destruct r; ff. } destruct_conjs. subst. ff. + inv_wfec. ff. repeat ff; (unfold OptMonad_Coq.bind in * ); repeat ff; eauto. ++ ff. assert (exists v, r = [v]). { destruct r; ff. destruct r; ff. } destruct_conjs. subst. ff. ++ assert (exists v, r = [v]). { destruct r; ff. } destruct_conjs. subst. ff. + inv_wfec. ff. unfold OptMonad_Coq.bind in * ; repeat ff; eauto. ++ assert (wf_ec (evc r0 e)). { eapply peel_fact. eassumption. eassumption. tauto. } assert (exists ee, Some ee = reconstruct_ev' r0 e). { invc H. eapply IHe. econstructor. eassumption. } destruct_conjs. ff. ++ inv_wfec. ff. assert (r = []). { destruct r; ff. } subst. ff. + inv_wfec. ff. eauto. + inv_wfec. simpl in H1. ff. repeat ff; (unfold OptMonad_Coq.bind in * ); repeat ff; eauto. assert (exists ee, Some ee = reconstruct_ev' r e). { eapply IHe. econstructor. eassumption. } destruct_conjs. congruence. + inv_wfec. ff. edestruct IHe. econstructor. eassumption. asdf *) - try (ff; eauto; tauto). inv_wfec; ff. do_rcih. do_rcih. destruct_conjs. jkjke'. jkjke'. ff. eauto.",1,Proof
+span_cvm,"forall atp t annt i j e e' tr tr' p p' i', build_cvmP atp {| st_ev := e; st_trace := tr; st_pl := p; st_evid := i |} (Some tt) {| st_ev := e'; st_trace := tr'; st_pl := p'; st_evid := i' |} -> term_to_coreP t atp -> anno t i = (j, annt) -> j = i'.",1,Lemma
+span_cvm_proof,intros. edestruct some_recons. eassumption. eexists. econstructor. eassumption.,1,Proof
+anno_span_cvm,"forall t pt annt i i' e e' p p' tr tr' st_evid1, annoP_indexed annt t i i' -> term_to_coreP t pt -> build_cvmP pt {| st_ev := e ; st_trace := tr ; st_pl := p; st_evid := i |} (Some tt) {| st_ev := e'; st_trace := tr'; st_pl := p'; st_evid := st_evid1 |} -> i' = st_evid1.",1,Lemma
+anno_span_cvm_proof,intros. induction t; ff. - destruct a; ff; try tauto.,1,Proof
+wfec_firstn,"forall e0 e1 e2, wf_ec (evc e0 e1) -> firstn (et_size e1) (e0 ++ e2) = e0.",1,Lemma
+wfec_firstn_proof,intros. generalizeEverythingElse t. induction t; intros; wrap_ccp_anno. try ( destruct a; try destruct a; ff; tauto); try ( repeat find_apply_hyp_hyp; lia).,1,Proof
+wfec_skipn,"forall e0 e1 e2, wf_ec (evc e0 e1) -> skipn (et_size e1) (e0 ++ e2) = e2.",1,Lemma
+wfec_skipn_proof,intros. assert (j = i + event_id_span' t). { assert (j - i = event_id_span' t). { symmetry. eapply span_range. eauto. } rewrite <- H2. assert (j > i). { eapply anno_mono; eauto. } lia. } subst. symmetry. eapply cvm_spans; eauto.,1,Proof
+wf_ec_preserved_by_cvm,"forall e e' t1 tr tr' p p' i i', wf_ec e -> build_cvmP t1 {| st_ev := e; st_trace := tr; st_pl := p; st_evid := i |} (Some tt) {| st_ev := e'; st_trace := tr'; st_pl := p'; st_evid := i' |} -> wf_ec (e').",1,Lemma
+wf_ec_preserved_by_cvm_proof,intros. invc H. eapply span_cvm; eauto.,1,Proof
+cvm_ev_denote_evtype,"forall annt p e, et_fun (cvm_evidence_denote annt p e) = (aeval annt p (et_fun e)).",1,Lemma
+cvm_ev_denote_evtype_proof,intros. inv_wfec. jkjke'. eapply More_lists.firstn_append.,1,Proof
+exists_some_cc,"forall t st, exists st', build_cvm t st = (Some tt, st').",1,Lemma
+exists_some_cc_proof,intros. inv_wfec. jkjke'. eapply More_lists.skipn_append.,1,Proof
+suffix_prop,"forall t e e' tr tr' p p' i i', build_cvmP t {| st_ev := e; st_trace := tr; st_pl := p; st_evid := i |} (Some tt) {| st_ev := e'; st_trace := tr'; st_pl := p'; st_evid := i' |} -> exists l, tr' = tr ++ l.",1,Lemma
+suffix_prop_proof,intros. generalizeEverythingElse t1. induction t1; intros. - rewrite <- ccp_iff_cc in *. destruct a; try destruct a; ff; inv_wfec; try ( econstructor; ff; try tauto; try congruence). + destruct f. ++ ff. econstructor. ff. ++ ff. econstructor. ff. ++ ff. econstructor. ff. ++ ff. econstructor. ff. ++ ff. econstructor. ff. - wrap_ccp. eapply wf_ec_preserved_remote; eauto. - wrap_ccp. eauto. - wrap_ccp. find_apply_hyp_hyp. find_apply_hyp_hyp. econstructor. dd. inv_wfec. repeat jkjke'. eapply app_length. - wrap_ccp. find_apply_hyp_hyp. inv_wfec; ff; econstructor; dd; repeat jkjke'. erewrite app_length. assert (wf_ec (evc r0 e1)). { rewrite <- Heqe1. eapply wf_ec_preserved_par. econstructor; eassumption. } solve_by_inversion.,1,Proof
+alseq_decomp,"forall t1' t2' e e'' p p'' tr i i'', build_cvmP (lseqc t1' t2') {| st_ev := e; st_trace := []; st_pl := p; st_evid := i |} (Some tt) {| st_ev := e''; st_trace := tr; st_pl := p''; st_evid := i'' |} -> exists e' tr' p' i', build_cvmP t1' {| st_ev := e; st_trace := []; st_pl := p; st_evid := i |} (Some tt) {| st_ev := e'; st_trace := tr'; st_pl := p'; st_evid := i' |} /\ exists tr'', build_cvmP t2' {| st_ev := e'; st_trace := []; st_pl := p'; st_evid := i' |} (Some tt) {| st_ev := e''; st_trace := tr''; st_pl := p''; st_evid := i'' |} /\ tr = tr' ++ tr''.",1,Lemma
+alseq_decomp_proof,intros. generalizeEverythingElse annt. induction annt; intros. - dd. destruct a; dd; try eauto. + destruct f; ff. destruct s; ff. destruct s; ff. - dd. eauto. - dd. assert (et_fun (cvm_evidence_denote annt1 p e) = aeval annt1 p (et_fun e)) by eauto. repeat jkjke. - dd. jkjke. jkjke. destruct s; destruct s; destruct s0; eauto. - dd. jkjke. jkjke. destruct s; destruct s; destruct s0; eauto.,1,Proof
+restl,"forall t e e' x tr p p' i i', build_cvmP t {| st_ev := e; st_trace := x; st_pl := p; st_evid := i|} (Some tt) {| st_ev := e'; st_trace := x ++ tr; st_pl := p'; st_evid := i' |} -> build_cvmP t {| st_ev := e; st_trace := []; st_pl := p; st_evid := i |} (Some tt) {| st_ev := e'; st_trace := tr; st_pl := p'; st_evid := i' |}.",1,Lemma
+restl_proof,intros. destruct (build_cvm t st) eqn:ee. do_asome. subst. eauto.,1,Proof
+par_evidence_r,"forall l p bits bits' et et' t2, parallel_vm_thread l (copland_compile t2) p (evc bits et) = evc bits' et' -> et' = eval t2 p et.",1,Lemma
+par_evidence_r_proof,induction t; intros. - wrap_ccp. destruct a; try destruct a; simpl; df; repeat rewrite app_assoc; reflexivity. - wrap_ccp. repeat rewrite app_assoc. reflexivity. - wrap_ccp_dohi. cumul_ih. dd. repeat do_st_trace. repeat find_rw_in_goal. eauto. - wrap_ccp_dohi. repeat rewrite <- app_assoc in *. cumul_ih. dd. cumul_ih. dd. rewrite app_assoc. eauto. - wrap_ccp_dohi. repeat rewrite <- app_assoc in *. cumul_ih. dd. repeat rewrite app_assoc. eauto.,1,Proof
+cvm_refines_lts_evidence,"forall t t' tr tr' bits bits' et et' p p' i i', term_to_coreP t t' -> build_cvmP t' (mk_st (evc bits et) tr p i) (Some tt) (mk_st (evc bits' et') tr' p' i') -> et' = (Term_Defs.eval t p et).",1,Lemma
+cvm_refines_lts_evidence_proof,intros. eapply st_trace_cumul''; eauto. repeat rewrite app_nil_r. eauto.,1,Proof
+cvm_raw_evidence_denote_fact,"forall t annt t' tr tr' bits bits' et et' p p' i i' ec ec', build_cvmP t (mk_st (evc bits et) tr p i) (Some tt) (mk_st (evc bits' et') tr' p' i') -> term_to_coreP t' t -> annoP_indexed annt t' i i' -> reconstruct_evP (evc bits et) ec -> reconstruct_evP (evc bits' et') ec' -> cvm_evidence_denote annt p ec = ec'.",1,Lemma
+cvm_raw_evidence_denote_fact_proof,intros. do_exists_some_cc t {| st_ev := e; st_trace := []; st_pl := p; st_evid := i |}. wrap_ccp. repeat do_st_trace_assumps. repeat find_rw_in_goal. eexists. erewrite st_trace_cumul''. 3: { eassumption. } simpl. tauto. rewrite app_nil_r. eassumption.,1,Proof
+cvm_raw_evidence_denote_fact_eval,"forall t annt t' tr tr' bits bits' et et' p p' i i' ec ec', build_cvmP t (mk_st (evc bits et) tr p i) (Some tt) (mk_st (evc bits' et') tr' p' i') -> term_to_coreP t' t -> annoP_indexed annt t' i i' -> reconstruct_evP (evc bits et) ec -> reconstruct_evP (evc bits' (eval t' p et)) ec' -> cvm_evidence_denote annt p ec = ec'.",1,Lemma
+cvm_raw_evidence_denote_fact_eval_proof,intros. wrap_ccp_dohi. eexists. eexists. eexists. eexists. split. + eassumption. + do_exists_some_cc t2' {| st_ev := st_ev0; st_trace := []; st_pl := st_pl0; st_evid := st_evid0 |}. vmsts. eexists. wrap_ccp_dohi. split. ++ eassumption. ++ repeat do_st_trace. repeat find_rw_in_goal. eapply st_trace_cumul'; eassumption.,1,Proof
+anno_parPloc_redo,"forall t pt loc loc', anno_par_list' t loc = Some (loc', pt) -> anno_parPloc pt t loc.",1,Lemma
+anno_parPloc_redo_proof,intros. do_exists_some_cc t {| st_ev := e; st_trace := []; st_pl := p; st_evid := i |}. wrap_ccp_dohi. assert (st_trace = tr). { do_st_trace. rewrite H0; clear H0. assert (tr = st_trace). { assert (Cvm_St.st_trace {| st_ev := st_ev; st_trace := x ++ tr; st_pl := st_pl; st_evid := st_evid|} = x ++ Cvm_St.st_trace {| st_ev := st_ev; st_trace := st_trace; st_pl := st_pl; st_evid := st_evid |}). { eapply st_trace_cumul'; eassumption. } simpl in *. eapply app_inv_head; eauto. } jkjke. } congruence.,1,Proof
+build_cvm_external,"forall (t : Core_Term) (e : EvC) (n : ID_Type) i, build_cvm t {| st_ev := e; st_trace := []; st_pl := n; st_evid := i|} = (Some tt, {| st_ev := cvm_evidence_core t n e; st_trace := cvm_events_core t n (get_et e); st_pl := n; st_evid := (i + event_id_span t) |}).",1,Lemma
+build_cvm_external_proof,intros. assert ([] ++ (cvm_events_core t n (get_et e)) = (cvm_events_core t n (get_et e))) by eauto. assert (n = st_pl ( execSt (build_cvm t) {| st_ev := e; st_trace := []; st_pl := n; st_evid := i |})) as H0'. { rewrite pl_immut; tauto. } rewrite H0' at 4. eapply build_cvm_external'.,1,Proof
+splitEv_T_l_LEFT,"forall e bits bits' es e0 sp, et_size e = es -> splitEv_l (ALL,sp) (evc bits e) = (evc bits' e0) -> et_size e0 = es.",1,Lemma
+splitEv_T_l_LEFT_proof,intros. ff.,1,Proof
+aeval_anno,"forall a i n e0, (aeval (snd (anno (unanno a) i)) n e0 = aeval a n e0).",1,Lemma
+aeval_anno_proof,intros. generalizeEverythingElse a. induction a; intros; ff; repeat jkjke'; repeat jkjke.,1,Proof
+evc_inv,"forall e, e = evc (get_bits e) (get_et e).",1,Lemma
+evc_inv_proof,destruct e; eauto.,1,Proof
+wfec_firstn,"forall e0 e1 e2, wf_ec (evc e0 e1) -> firstn (et_size e1) (e0 ++ e2) = e0.",1,Lemma
+wfec_firstn_proof,tauto.,1,Proof
+wfec_skipn,"forall e0 e1 e2, wf_ec (evc e0 e1) -> skipn (et_size e1) (e0 ++ e2) = e2.",1,Lemma
+wfec_skipn_proof,tauto.,1,Proof
+wfec_encodeEv_etfun,"forall e, wf_ec (evc (encodeEv e) (et_fun e)).",1,Lemma
+wfec_encodeEv_etfun_proof,intros. inv_wfec. jkjke'. eapply More_lists.firstn_append.,1,Proof
+recon_same,"forall e, Some e = reconstruct_ev (evc (encodeEv e) (et_fun e)).",1,Lemma
+recon_same_proof,intros. inv_wfec. jkjke'. eapply More_lists.skipn_append.,1,Proof
+wf_ec_preserved_by_cvm,"forall e e' t1 tr tr' p p' i i', wf_ec e -> build_cvmP t1 {| st_ev := e; st_trace := tr; st_pl := p; st_evid := i |} (Some tt) {| st_ev := e'; st_trace := tr'; st_pl := p'; st_evid := i' |} -> wf_ec (e').",1,Lemma
+wf_ec_preserved_by_cvm_proof,intros. induction e; intros; dd; try (econstructor; tauto); try (repeat inv_wfec; econstructor; dd; try (erewrite app_length); jkjke).,1,Proof
+event_id_spans_same,"forall t, event_id_span' t = event_id_span (copland_compile t).",1,Lemma
+event_id_spans_same_proof,intros. induction e; intros; dd; try (try jkjke'; tauto); try ( assert (wf_ec (evc (encodeEv e1) (et_fun e1))) by (eapply wfec_encodeEv_etfun); ff; try (unfold OptMonad_Coq.bind); ff; try do_wfec_firstn; try do_wfec_skipn; repeat find_rewrite; try solve_by_inversion; try (repeat find_inversion; tauto)). Locate encodeEv. Locate reconstruct_ev.,1,Proof
+cvm_spans,"forall t pt e tr p i e' tr' p' i', term_to_coreP t pt -> build_cvmP pt {| st_ev := e; st_trace := tr; st_pl := p; st_evid := i |} (Some tt) {| st_ev := e'; st_trace := tr'; st_pl := p'; st_evid := i' |} -> i' = i + event_id_span' t.",1,Lemma
+cvm_spans_proof,intros. generalizeEverythingElse t1. induction t1; intros. - rewrite <- ccp_iff_cc in *. destruct a; try destruct a; ff; inv_wfec; try ( econstructor; ff; try tauto; try congruence). + destruct f. ++ ff. econstructor. ff. ++ ff. econstructor. ff. ++ ff. econstructor. ff. congruence. ++ ff. econstructor. ff. ++ ff. econstructor. ff. - wrap_ccp. eapply wf_ec_preserved_remote; eauto. - wrap_ccp. eauto. - wrap_ccp. find_apply_hyp_hyp. find_apply_hyp_hyp. econstructor. dd. inv_wfec. repeat jkjke'. eapply app_length. - wrap_ccp. find_apply_hyp_hyp. inv_wfec; ff; econstructor; dd; repeat jkjke'. erewrite app_length. assert (wf_ec (evc r0 e1)). { rewrite <- Heqe1. eapply wf_ec_preserved_par. econstructor; eassumption. } solve_by_inversion.,1,Proof
+span_cvm,"forall atp t annt i j e e' tr tr' p p' i', build_cvmP atp {| st_ev := e; st_trace := tr; st_pl := p; st_evid := i |} (Some tt) {| st_ev := e'; st_trace := tr'; st_pl := p'; st_evid := i' |} -> term_to_coreP t atp -> anno t i = (j, annt) -> j = i'.",1,Lemma
+span_cvm_proof,intros. destruct e; ff; eauto.,1,Proof
+anno_span_cvm,"forall t pt annt i i' e e' p p' tr tr' st_evid1, annoP_indexed annt t i i' -> term_to_coreP t pt -> build_cvmP pt {| st_ev := e ; st_trace := tr ; st_pl := p; st_evid := i |} (Some tt) {| st_ev := e'; st_trace := tr'; st_pl := p'; st_evid := st_evid1 |} -> i' = st_evid1.",1,Lemma
+anno_span_cvm_proof,intros. induction t; ff. - destruct a; ff; try tauto. + destruct s; ff. - jkjke'. - destruct s0; ff; lia. - destruct s0; ff; lia.,1,Proof
+mapD_key_values_length,"forall m, length (mapD_vals m) = length (mapD_keys m).",1,Lemma
+mapD_key_values_length_proof,intros. induction m; simpl. - reflexivity. - destruct a. simpl. rewrite IHm. reflexivity.,1,Proof

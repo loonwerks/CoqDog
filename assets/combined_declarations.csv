@@ -1,0 +1,2345 @@
+item-name,item-body,int-label,label
+Term.v,events,": AnnoTerm -> Plc -> Evidence -> Ev -> Prop :=
+| evtsnull:
+    forall r i p e,
+      fst r = i ->
+      events (aasp r NULL) p e (null i p)
+| evtscpy:
+    forall r i p e,
+      fst r = i ->
+      events (aasp r CPY) p e (copy i p)
+| evtsusm:
+    forall i r p e sp fwd ps,
+      fst r = i ->
+      events (aasp r (ASPC sp fwd ps)) p e (umeas i p ps (sp_ev sp e))
+| evtssig:
+    forall r i p e,
+      fst r = i ->
+      events (aasp r SIG) p e (umeas i p sig_params e) (* (sign i p e) *)
+| evtshsh:
+    forall r i p e,
+      fst r = i ->
+      events (aasp r HSH) p e (umeas i p hsh_params e) (* (hash i p e) *)
+| evtsenc:
+    forall r i p q e,
+      fst r = i ->
+      events (aasp r (ENC q)) p e (umeas i p (enc_params q) e) (* (hash i p e) *)
+| evtsattreq:
+    forall r q t i p e,
+      fst r = i ->
+      events (aatt r q t) p e (req i p q (unanno t) e)
+| evtsatt:
+    forall r q t ev p e,
+      events t q e ev ->
+      events (aatt r q t) p e ev
+| evtsattrpy:
+    forall r q t i p e,
+      snd r = S i ->
+      events (aatt r q t) p e (rpy i p q (aeval t q e))
+| evtslseql:
+    forall r t1 t2 ev p e,
+      events t1 p e ev ->
+      events (alseq r t1 t2) p e ev
+| evtslseqr:
+    forall r t1 t2 ev p e,
+      events t2 p (aeval t1 p e) ev ->
+      events (alseq r t1 t2) p e ev
+             
+| evtsbseqsplit:
+    forall r i s e t1 t2 p,
+      fst r = i ->
+      events (abseq r s t1 t2) p e (Term_Defs.split i p)
+| evtsbseql:
+    forall r s e t1 t2 ev p,
+      events t1 p (splitEv_T_l s e) ev ->
+      events (abseq r s t1 t2) p e ev
+| evtsbseqr:
+    forall r s e t1 t2 ev p,
+      events t2 p (splitEv_T_r s e) ev ->
+      events (abseq r s t1 t2) p e ev
+| evtsbseqjoin:
+    forall r i s e t1 t2 p,
+      snd r = S i ->
+      events (abseq r s t1 t2) p e (join i p)
+
+| evtsbparsplit:
+    forall r i s e t1 t2 p,
+      fst r = i ->
+      events (abpar r s t1 t2) p e
+             (Term_Defs.split i p)
+| evtsbparl:
+    forall r s e t1 t2 ev p,
+      events t1 p (splitEv_T_l s e) ev ->
+      events (abpar r s t1 t2) p e ev
+| evtsbparr:
+    forall r s e t1 t2 ev p,
+      events t2 p (splitEv_T_r s e) ev ->
+      events (abpar r s t1 t2) p e ev
+| evtsbparjoin:
+    forall r i s e t1 t2 p,
+      snd r = S i ->
+      events (abpar r s t1 t2) p e
+             (join i  p).
+#[export] Hint Constructors events : core.
+
+Ltac inv_events :=
+  match goal with
+  | [H:events (?C _) _ _ _ |- _] => inv H
+  end.
+
+Ltac inv_wfr :=
+  match goal with
+  | [H: well_formed_r_annt _ |- _] => inv H
+  end.
+
+Lemma events_range:
+  forall t v p e,
+    well_formed_r_annt t ->
+    events t p e v ->
+    fst (range t) <= ev v < snd (range t).
+Proof.
+  intros t v p e H H0.
+  pose proof H as G.
+  apply well_formed_range_r in G.
+  rewrite G.
+  clear G.
+  induction H0;
+    try (inv_wfr; simpl in *; auto;
+         repeat find_apply_hyp_hyp;
+         repeat (find_apply_lem_hyp well_formed_range_r); lia).
+Defined.
+
+Lemma at_range:
+  forall x r i,
+    S (fst r) = fst x ->
+    snd r = S (snd x) ->
+    fst r <= i < snd r ->
+    i = fst r \/
+    fst x <= i < snd x \/
+    i = snd x.
+Proof.
+  intros.
+  pose proof lt_dec i (S (fst r)) as G.
+  destruct G as [G|G]; [left; lia| right].
+  pose proof lt_dec i (snd x) as F.
+  destruct F as [F|F]; [left; lia| right].
+  lia.
+Qed.
+
+Lemma lin_range:
+  forall x y i,
+    snd x = fst y ->
+    fst x <= i < snd y ->
+    fst x <= i < snd x \/
+    fst y <= i < snd y.
+Proof.
+  intros.
+  pose proof lt_dec i (snd x) as G.
+  destruct G; lia.
+Qed.
+
+Lemma bra_range:
+  forall x y r i,
+    S (fst r) = fst x ->
+    snd x = fst y ->
+    snd r = S (snd y) ->
+    fst r <= i < snd r ->
+    i = fst r \/
+    fst x <= i < snd x \/
+    fst y <= i < snd y \/
+    i = snd y.
+Proof.
+  intros.
+  pose proof lt_dec i (S (fst r)) as G.
+  destruct G as [G|G]; [left; lia| right].
+  pose proof lt_dec i (snd x) as F.
+  destruct F as [F|F]; [left; lia| right].
+  pose proof lt_dec i (snd y) as E.
+  destruct E; lia.
+Qed.
+
+Ltac dest_range :=
+  match goal with
+  | [H: (nat * nat) |- _] => destruct H
+  end.
+
+Ltac do_lin_range :=
+  match goal with
+  | [H: snd _ = fst _,
+        H': fst _ <= ?n < snd _
+     |- _] =>
+    apply lin_range with (i:=n) in H; eauto
+  end.
+
+Ltac do_bra_range :=
+  match goal with
+  | [H: snd _ = fst _,
+        H': fst ?x <= ?n < snd ?x
+     |- _] =>
+    apply bra_range with (i:=n) (r:=x) in H; eauto
+  end.
+
+(** Properties of events. *)
+
+Lemma events_range_event:
+  forall t p i e,
+    well_formed_r_annt t ->
+    fst (range t) <= i < snd (range t) ->
+    exists v, events t p e v /\ ev v = i.
+Proof.
+  intros t p i e H; revert i; revert p; revert e.
+  induction H; intros; simpl in *.
+  - destruct x; try destruct a; eapply ex_intro; split; auto;
+      (*destruct r as [j k];*) simpl in *; try lia.
+    (*
+    + admit.
+    + *)
+      
+  - find_eapply_lem_hyp at_range; eauto.
+    repeat destruct_disjunct; subst; eauto.
+    (* + eapply ex_intro; split; auto. *)
+
+    find_eapply_hyp_hyp.
+    (*apply IHwell_formed with (p:=p) in H2. *)
+    destruct_conjs.
+    eauto.
+  -
+    do_lin_range;       
+      eauto;
+      repeat destruct_disjunct;
+      try lia;
+      try (find_eapply_hyp_hyp; eauto;
+           destruct_conjs;
+           eauto).  
+  -
+    do_bra_range;
+      eauto;
+      repeat destruct_disjunct; subst;
+        try lia;
+        try (find_eapply_hyp_hyp; eauto;
+             destruct_conjs;
+             eauto; tauto).
+    
+
+    + eapply ex_intro; split; try (auto; eauto;tauto).
+    + eapply ex_intro; split; try (eauto; auto; tauto).
+      
+  -
+    do_bra_range;
+      eauto;
+      repeat destruct_disjunct; subst;
+        try lia;
+        try (find_eapply_hyp_hyp; eauto;
+             destruct_conjs;
+             eauto; tauto).
+
+    + eapply ex_intro; split; auto.
+    + eapply ex_intro; split; eauto.
+Qed.
+
+Ltac events_event_range :=
+  repeat match goal with
+         | [ H: events _ _ _ _ |- _ ] =>
+           apply events_range in H; auto
+         end; lia.
+
+Ltac aba :=
+  match goal with
+  | [H: events _ _ _ _, H': events _ _ _ _ |- _] => inv H; inv H'
+  end.
+
+Ltac wfr :=
+  match goal with
+  | [H': well_formed_r_annt ?HH |- _] => pose_new_proof (well_formed_range_r HH H')
+  end.
+
+Lemma events_injective:
+  forall t p e v1 v2,
+    well_formed_r_annt t ->
+    events t p e v1 ->
+    events t p e v2 ->
+    ev v1 = ev v2 ->
+    v1 = v2.
+Proof.
+  intros.
+  generalizeEverythingElse H.
+  induction H; intros;
+    try (
+        repeat wfr;
+        aba; simpl in *; subst; auto;
+        try (events_event_range; tauto);
+        try (find_eapply_hyp_hyp; eauto);
+        eauto).
+Qed.",5,Inductive
+Params_Admits.v,sig_params,": ASP_PARAMS.
+Admitted.",3,Definition
+Params_Admits.v,hsh_params,": ASP_PARAMS.
+Admitted.",3,Definition
+Params_Admits.v,enc_params,": Plc -> ASP_PARAMS.
+Admitted.",3,Definition
+Evidence_Bundlers.v,encodeEvBits,"(e:EvC): BS :=
+  match e with
+  | (evc bits _) => encodeEvRaw bits
+  end.
+
+(** Extends raw evidence by prepending one value to the front.
+    Also updates underlying Evidence Type.
+    An example is digital signatures, where the signature value is prepended *)",3,Definition
+Evidence_Bundlers.v,cons_gg,"(sig:BS) (e:EvC) (p:Plc) (ps:ASP_PARAMS): EvC :=
+  match e with
+  | evc bits et => evc (sig :: bits) (uu p EXTD ps et)
+  end.
+
+(** Collapses raw evidence by replacing the entire sequence with the input 
+    binary hash value.  Updates underlying Evidence Type to reflect the hash. *)",3,Definition
+Evidence_Bundlers.v,cons_hsh,"(hsh:BS) (e:EvC) (p:Plc) (ps:ASP_PARAMS): EvC :=
+  match e with
+  | evc _ et => evc [hsh] (uu p COMP ps et)
+  end.
+
+(** Collapses raw evidence by replacing the entire sequence with the input 
+    encrypted value blob.  Updates underlying Evidence Type to reflect the
+    encryption. *)",3,Definition
+Evidence_Bundlers.v,cons_enc,"(enc:BS) (e:EvC) (p:Plc) (ps:ASP_PARAMS): EvC :=
+  match e with
+  | evc _ et => evc [enc] (uu p ENCR ps et)
+  end.
+
+(** Appends raw evidence and Evidence Types for the pair of input bundles *)",3,Definition
+Evidence_Bundlers.v,ss_cons,"(e1:EvC) (e2:EvC): EvC :=
+  match (e1, e2) with
+  | (evc bits1 et1, evc bits2 et2) => evc (bits1 ++ bits2) (ss et1 et2)
+  end.",3,Definition
+Copland_AC.v,Permission,": Set :=
+| READ
+| WRITE
+| EXECUTE.",5,Inductive
+Copland_AC.v,Object,": Set :=
+| asp_obj:  Plc -> ASP_ID -> Object
+| plc_obj:  Plc -> Object
+| targ_obj: Plc -> TARG_ID -> Object.
+
+(* 
+    asp:
+        READ - view all incoming evidence to specific ASP
+        WRITE - corrupt specific asp (including tampering w/ evidence)
+        EXECUTE - invoke specific ASP via CVM
+
+    plc:
+        READ - view everything at a place
+        WRITE - corrupt everything at a place
+        EXECUTE - invoke an AM (all of its ASPs)
+
+    targ:
+        READ - view a specific target (e.g. eavesdrop, measure, ...)
+        WRITE - corrupt specific target
+        EXECUTE - ?
+   
+ *)",5,Inductive
+Copland_AC.v,AC_Policy,: Permission -> Object -> Prop.,3,Definition
+OptMonad_Coq.v,Opt,(A : Type) : Type := (option A). (** S % type. *),3,Definition
+OptMonad_Coq.v,ret,{A : Type} (a : A) : Opt A := (Some a).,3,Definition
+OptMonad_Coq.v,bind,"{A B : Type} (m : Opt A) (f : A -> Opt B) : Opt B :=
+    match m with
+    | Some v => f v
+    | _ => None
+    end.",3,Definition
+OptMonad_Coq.v,failm,{A : Type} : Opt A := None.,3,Definition
+OptMonad_Coq.v,runOpt,"{A} (h : Opt A) (default: A) : A :=
+  match h with
+    Some v => v
+  | _ => default
+  end.",3,Definition
+OptMonad_Coq.v,nop,":= ret tt.
+
+Notation ""a >> b"" := (bind a (fun _ => b)) (at level 50).
+
+Notation ""x <- c1 ;; c2"" := (@bind _ _ c1 (fun x => c2))
+                              (at level 100, c1 at next level, right associativity).
+
+Notation ""e1 ;; e2"" := (_ <- e1 ;; e2)
+                         (at level 100, right associativity).
+
+
+Notation ""' pat <- c1 ;; c2"" :=
+    (@bind _ _ c1 (fun x => match x with pat => c2 end))
+    (at level 100, pat pattern, c1 at next level, right associativity).",3,Definition
+OptMonad_Coq.v,when,"{A} (b : bool) (m : Opt A) : Opt unit :=
+  if b then m ;; ret tt else nop.",3,Definition
+OptMonad_Coq.v,fromSome,"{A:Type} (default:A) (opt:Opt A): A :=
+  match opt with
+  | Some x => x
+  | _ => default
+  end.",3,Definition
+AM_St.v,empty_amst,":=
+  mkAM_St map_empty 0 (* [] [] *) .",3,Definition
+Event_system.v,ES_Range,": Set := nat * nat.
+
+  (** An event system. *)
+
+  Inductive EvSys: Set :=
+  | leaf: ES_Range -> A -> EvSys
+  | before: ES_Range -> EvSys -> EvSys -> EvSys
+  | merge: ES_Range -> EvSys -> EvSys -> EvSys.
+
+  Definition es_range es :=
+    match es with
+    | leaf r _ => r
+    | before r _ _ => r
+    | merge r _ _ => r
+    end.
+
+  Fixpoint es_size es :=
+    match es with
+    | leaf _ _=> 1
+    | before _ x y => es_size x + es_size y
+    | merge _ x y => es_size x + es_size y
+    end.
+
+  (** Definition of a well-structured event system. *)
+
+  Inductive well_structured: EvSys -> Prop :=
+  | ws_leaf_event:
+      forall r e,
+        snd r = S (fst r) ->
+        ev e = fst r ->
+        well_structured (leaf r e)
+  | ws_before:
+      forall r x y,
+        well_structured x ->
+        well_structured y ->
+        r = (fst (es_range x), snd (es_range y)) ->
+        snd (es_range x) = fst (es_range y) ->
+        well_structured (before r x y)
+  | ws_merge:
+      forall r x y,
+        well_structured x ->
+        well_structured y ->
+        r = (fst (es_range x), snd (es_range y)) ->
+        snd (es_range x) = fst (es_range y) ->
+        well_structured (merge r x y).
+  #[local] Hint Constructors well_structured : core.
+
+  Lemma well_structured_range:
+    forall es,
+      well_structured es ->
+      snd (es_range es) = fst (es_range es) + es_size es.
+  Proof.
+    induction es; simpl; intros; inv H; simpl; auto;
+      try rewrite Nat.add_1_r; auto;
+        apply IHes1 in H3;
+        apply IHes2 in H4;
+        lia.
+  Qed.
+
+  (** Is an event in an event system? *)
+
+  Inductive ev_in: A -> EvSys -> Prop :=
+  | ein_leaf: forall r ev,
+      ev_in ev (leaf r ev)
+  | ein_beforel: forall r ev es1 es2,
+      ev_in ev es1 -> ev_in ev (before r es1 es2)
+  | ein_beforer: forall r ev es1 es2,
+      ev_in ev es2 -> ev_in ev (before r es1 es2)
+  | ein_mergel: forall r ev es1 es2,
+      ev_in ev es1 -> ev_in ev (merge r es1 es2)
+  | ein_merger: forall r ev es1 es2,
+      ev_in ev es2 -> ev_in ev (merge r es1 es2).
+  #[local] Hint Constructors ev_in : core.
+
+  (** Is one event before another? *)
+
+  Inductive prec: EvSys -> A -> A -> Prop :=
+  | prseq: forall r x y e f,
+      ev_in e x -> ev_in f y ->
+      prec (before r x y) e f
+  | prseql: forall r x y e f,
+      prec x e f ->
+      prec (before r x y) e f
+  | prseqr: forall r x y e f,
+      prec y e f ->
+      prec (before r x y) e f
+  | prparl: forall r x y e f,
+      prec x e f ->
+      prec (merge r x y) e f
+  | prparr: forall r x y e f,
+      prec y e f ->
+      prec (merge r x y) e f.
+  #[local] Hint Constructors prec : core.
+
+  Lemma prec_in_left:
+    forall es ev1 ev2,
+      prec es ev1 ev2 -> ev_in ev1 es.
+  Proof.
+    intros; induction H; auto.
+  Qed.
+
+  Lemma prec_in_right:
+    forall es ev1 ev2,
+      prec es ev1 ev2 -> ev_in ev2 es.
+  Proof.
+    intros; induction H; auto.
+  Qed.
+
+  Lemma ws_evsys_range:
+    forall es e,
+      well_structured es ->
+      ev_in e es ->
+      fst (es_range es) <= ev e < snd (es_range es).
+  Proof.
+    intros.
+    pose proof H as G.
+    apply well_structured_range in G.
+    rewrite G.
+    clear G.
+    revert H0.
+    revert e.
+    induction es; intros; simpl in *; inv H; simpl in *;
+      inv H0; simpl; try lia.
+    - apply IHes1 in H2; auto; lia.
+    - apply IHes2 in H2; auto.
+      apply well_structured_range in H4.
+      lia.
+    - apply IHes1 in H2; auto; lia.
+    - apply IHes2 in H2; auto.
+      apply well_structured_range in H4.
+      lia.
+  Qed.
+
+  Lemma es_injective_events:
+    forall es ev0 ev1,
+      well_structured es ->
+      ev_in ev0 es -> ev_in ev1 es ->
+      ev ev0 = ev ev1 ->
+      ev0 = ev1.
+  Proof.
+    intros.
+    revert H2.
+    revert H1.
+    revert H0.
+    revert ev1.
+    revert ev0.
+    induction H; intros; simpl in *.
+    - inv H1; inv H2; auto.
+    - inv H3; inv H4.
+      + eapply IHwell_structured1 in H8; eauto.
+      + apply ws_evsys_range in H8; auto.
+        apply ws_evsys_range in H6; auto.
+        lia.
+      + apply ws_evsys_range in H8; auto.
+        apply ws_evsys_range in H6; auto.
+        lia.
+      + eapply IHwell_structured2 in H8; eauto.
+    - inv H3; inv H4.
+      + eapply IHwell_structured1 in H8; eauto.
+      + apply ws_evsys_range in H8; auto.
+        apply ws_evsys_range in H6; auto.
+        lia.
+      + apply ws_evsys_range in H8; auto.
+        apply ws_evsys_range in H6; auto.
+        lia.
+      + eapply IHwell_structured2 in H8; eauto.
+  Qed.
+
+  (** A relation is a strict partial order iff it is irreflexive and
+    transitive. *)
+
+  Lemma evsys_irreflexive:
+    forall es ev,
+      well_structured es ->
+      ~prec es ev ev.
+  Proof.
+    induction es; intros; intro; inv H; inv H0.
+    - apply ws_evsys_range in H8; auto.
+      apply ws_evsys_range in H9; auto.
+      lia.
+    - apply IHes1 in H8; auto.
+    - apply IHes2 in H8; auto.
+    - apply IHes1 in H8; auto.
+    - apply IHes2 in H8; auto.
+  Qed.
+
+  Lemma evsys_transitive:
+    forall es ev0 ev1 ev2,
+      well_structured es ->
+      prec es ev0 ev1 ->
+      prec es ev1 ev2 ->
+      prec es ev0 ev2.
+  Proof.
+    induction es; intros.
+    - inv H0.
+    - inv H.
+      inv H0.
+      + inv H1.
+        * apply ws_evsys_range in H10; auto.
+        * apply prec_in_left in H7.
+          apply ws_evsys_range in H7; auto.
+          apply ws_evsys_range in H10; auto.
+          lia.
+        * apply prec_in_right in H7; auto.
+      + assert (G: ev_in ev0 es1). apply prec_in_left in H9; auto.
+        assert (F: ev_in ev1 es1). apply prec_in_right in H9; auto.
+        inv H1; auto.
+        eapply IHes1 in H7; eauto.
+        apply prseq; auto.
+        apply prec_in_right in H7; auto.
+      + assert (G: ev_in ev0 es2). apply prec_in_left in H9; auto.
+        assert (F: ev_in ev1 es2). apply prec_in_right in H9; auto.
+        inv H1.
+        * apply ws_evsys_range in H7; auto.
+          apply ws_evsys_range in F; auto.
+          lia.
+        * apply prec_in_left in H7.
+          apply ws_evsys_range in H7; auto.
+          apply ws_evsys_range in F; auto.
+          lia.
+        * eapply IHes2 in H7; eauto.
+    - inv H.
+      inv H0.
+      + inv H1.
+        * eapply IHes1 in H7; eauto.
+        * apply prec_in_left in H7.
+          apply prec_in_right in H9.
+          apply ws_evsys_range in H9; auto.
+          apply ws_evsys_range in H7; auto.
+          lia.
+      + assert (G: ev_in ev0 es2). apply prec_in_left in H9; auto.
+        assert (F: ev_in ev1 es2). apply prec_in_right in H9; auto.
+        inv H1.
+        * apply prec_in_left in H7.
+          apply ws_evsys_range in H7; auto.
+          apply ws_evsys_range in F; auto.
+          lia.
+        * eapply IHes2 in H7; eauto.
+  Qed.
+
+  (** Merge is associative. *)
+
+  Definition same_rel es0 es1 :=
+    forall ev0 ev1,
+      prec es0 ev0 ev1 <-> prec es1 ev0 ev1.
+
+  Lemma ws_merge1:
+    forall r s x y z,
+      well_structured (merge r x y) ->
+      well_structured (merge s y z) ->
+      well_structured (merge (fst r, snd s) x (merge s y z)).
+  Proof.
+    intros r s x y z Hr Hs.
+    inv Hr; inv Hs.
+    constructor; simpl; auto; lia.
+  Qed.
+
+  Lemma ws_merge2:
+    forall r s x y z,
+      well_structured (merge r x y) ->
+      well_structured (merge s y z) ->
+      well_structured (merge (fst r, snd s) (merge r x y) z).
+  Proof.
+    intros r s x y z Hr Hs.
+    inv Hr; inv Hs.
+    constructor; simpl; auto; lia.
+  Qed.
+
+  Lemma merge_associative:
+    forall r s x y z,
+      same_rel (merge (fst r, snd s) x (merge s y z))
+               (merge (fst r, snd s) (merge r x y) z).
+  Proof.
+    intros r s x y z.
+    split; intro; inv H.
+    - apply prparl; apply prparl; auto.
+    - inv H5.
+      + apply prparl; apply prparr; auto.
+      + apply prparr; auto.
+    - inv H5.
+      + apply prparl; auto.
+      + apply prparr; apply prparl; auto.
+    - apply prparr; apply prparr; auto.
+  Qed.
+
+  (** A more useful form of merge associative *)
+
+  Lemma merge_associative_pairs:
+    forall r0 r1 s0 s1 x y z,
+      same_rel (merge (r0, s1) x (merge (s0, s1) y z))
+               (merge (r0, s1) (merge (r0, r1) x y) z).
+  Proof.
+    intros.
+    apply merge_associative with (s:=(s0, s1))(r:=(r0,r1)).
+  Qed.
+
+  (** Before is associative. *)
+
+  Lemma ws_before1:
+    forall r s x y z,
+      well_structured (before r x y) ->
+      well_structured (before s y z) ->
+      well_structured (before (fst r, snd s) x (before s y z)).
+  Proof.
+    intros r s x y z Hr Hs.
+    inv Hr; inv Hs.
+    constructor; simpl; auto; lia.
+  Qed.
+
+  Lemma ws_before2:
+    forall r s x y z,
+      well_structured (before r x y) ->
+      well_structured (before s y z) ->
+      well_structured (before (fst r, snd s) (before r x y) z).
+  Proof.
+    intros r s x y z Hr Hs.
+    inv Hr; inv Hs.
+    constructor; simpl; auto; lia.
+  Qed.
+
+  Lemma before_associative:
+    forall r s x y z,
+      same_rel (before (fst r, snd s) x (before s y z))
+               (before (fst r, snd s) (before r x y) z).
+  Proof.
+    intros r s x y z.
+    split; intro; inv H.
+    - inv H6.
+      + apply prseql; auto.
+      + apply prseq; auto.
+    - apply prseql; apply prseql; auto.
+    - inv H5.
+      + apply prseq; auto.
+      + apply prseql; apply prseqr; auto.
+      + apply prseqr; auto.
+    - inv H5.
+      + apply prseq; auto.
+      + apply prseqr; apply prseq; auto.
+    - inv H5.
+      + apply prseq; auto.
+      + apply prseql; auto.
+      + apply prseqr; apply prseql; auto.
+    - apply prseqr; apply prseqr; auto.
+  Qed.
+
+  Lemma before_associative_pairs:
+    forall r0 r1 s0 s1 x y z,
+      same_rel (before (r0, s1) x (before (s0, s1) y z))
+               (before (r0, s1) (before (r0, r1) x y) z).
+  Proof.
+    intros.
+    apply before_associative with (s:=(s0, s1))(r:=(r0,r1)).
+  Qed.
+
+  Lemma ws_exists:
+    forall es,
+      well_structured es ->
+      exists e, ev_in e es.
+  Proof.
+    intros.
+    induction H.
+    - exists e; auto.
+    - destruct IHwell_structured1 as [e].
+      exists e; auto.
+    - destruct IHwell_structured1 as [e].
+      exists e; auto.
+  Qed.
+
+  (** Maximal events. *)
+
+  Definition supreme es e :=
+    ev_in e es /\ forall e0, ev_in e0 es -> ~prec es e e0.
+
+  (** Inductive version of a maximal event. *)
+
+  Inductive sup: EvSys -> A -> Prop :=
+  | sup_leaf: forall r e, sup (leaf r e) e
+  | sup_before:
+      forall r es0 es1 e,
+        sup es1 e -> sup (before r es0 es1) e
+  | sup_mergel:
+      forall r es0 es1 e,
+        sup es0 e -> sup (merge r es0 es1) e
+  | sup_merger:
+      forall r es0 es1 e,
+        sup es1 e -> sup (merge r es0 es1) e.
+  #[local] Hint Constructors sup : core.
+
+  Lemma before_sup:
+    forall r x y e,
+      sup (before r x y) e -> sup y e.
+  Proof.
+    intros.
+    inv H.
+    auto.
+  Qed.
+
+  Lemma sup_supreme:
+    forall es e,
+      well_structured es ->
+      sup es e <-> supreme es e.
+  Proof.
+    unfold supreme; split.
+    -  induction H; intros.
+       + inv H1.
+         split; auto; intros; intro.
+         inv H1.
+         apply evsys_irreflexive in H2; auto.
+       + inv H1.
+         inv H3.
+         apply IHwell_structured2 in H7.
+         destruct H7.
+         split.
+         * apply ein_beforer; auto.
+         * intros; intro.
+           inv H4; inv H5.
+           -- apply ws_evsys_range in H8; auto.
+              apply ws_evsys_range in H12; auto.
+              lia.
+           -- apply prec_in_left in H11.
+              apply ws_evsys_range in H1; auto.
+              apply ws_evsys_range in H11; auto.
+              lia.
+           -- apply prec_in_right in H11.
+              apply ws_evsys_range in H8; auto.
+              apply ws_evsys_range in H11; auto.
+              lia.
+           -- apply ws_evsys_range in H1; auto.
+              apply ws_evsys_range in H11; auto.
+              lia.
+           -- apply prec_in_left in H11.
+              apply ws_evsys_range in H1; auto.
+              apply ws_evsys_range in H11; auto.
+              lia.
+           -- apply H3 in H8.
+              tauto.
+       + inv H3.
+         * apply IHwell_structured1 in H8.
+           destruct H8.
+           split.
+           -- apply ein_mergel; auto.
+           -- intros; intro.
+              inv H4; inv H5.
+              ++ apply H3 in H8; tauto.
+              ++ apply prec_in_right in H11.
+                 apply ws_evsys_range in H8; auto.
+                 apply ws_evsys_range in H11; auto.
+                 lia.
+              ++ apply prec_in_right in H11.
+                 apply ws_evsys_range in H8; auto.
+                 apply ws_evsys_range in H11; auto.
+                 lia.
+              ++ apply prec_in_left in H11.
+                 apply ws_evsys_range in H1; auto.
+                 apply ws_evsys_range in H11; auto.
+                 lia.
+         * apply IHwell_structured2 in H8.
+           destruct H8.
+           split.
+           -- apply ein_merger; auto.
+           -- intros; intro.
+              inv H4; inv H5.
+              ++ apply prec_in_left in H11.
+                 apply ws_evsys_range in H1; auto.
+                 apply ws_evsys_range in H11; auto.
+                 lia.
+              ++ apply prec_in_right in H11.
+                 apply ws_evsys_range in H8; auto.
+                 apply ws_evsys_range in H11; auto.
+                 lia.
+              ++ apply prec_in_left in H11.
+                 apply ws_evsys_range in H1; auto.
+                 apply ws_evsys_range in H11; auto.
+                 lia.
+              ++ apply H3 in H8; tauto.
+    - intro; destruct H0.
+      induction H; intros.
+      + inv H0; auto.
+      + inv H0; auto.
+        * cut (exists f, ev_in f y).
+          -- intros.
+             destruct H0 as [f].
+             specialize H1 with f.
+             assert (G: prec
+                          (before (fst (es_range x), snd (es_range y)) x y) e f).
+             apply prseq; auto.
+             apply H1 in G; auto.
+             tauto.
+          -- apply ws_exists; auto.
+        * apply sup_before.
+          apply IHwell_structured2; auto.
+          intros; intro.
+          assert (G: prec
+                       (before (fst (es_range x), snd (es_range y)) x y) e e0).
+          apply prseqr; auto.
+          apply H1 in G; auto; tauto.
+      + inv H0.
+        * apply IHwell_structured1 in H7; auto.
+          intros; intro.
+          assert (G: prec
+                       (merge (fst (es_range x), snd (es_range y)) x y) e e0).
+          apply prparl; auto.
+          apply H1 in G; auto; tauto.
+        * apply IHwell_structured2 in H7; auto.
+          intros; intro.
+          assert (G: prec
+                       (merge (fst (es_range x), snd (es_range y)) x y) e e0).
+          apply prparr; auto.
+          apply H1 in G; auto; tauto.
+  Qed.
+
+  (** Return one of possibly many maximal events. *)
+
+  Fixpoint max es :=
+    match es with
+    | leaf _ e => e
+    | before _ x y => max y
+    | merge _ x y => max y
+    end.
+
+  Lemma supreme_max:
+    forall es,
+      well_structured es ->
+      supreme es (max es).
+  Proof.
+    intros.
+    apply sup_supreme; auto.
+    induction H; auto.
+  Qed.
+
+End Event_system.
+
+#[export] Hint Constructors well_structured ev_in prec sup : core.
+
+Unset Implicit Arguments.",3,Definition
+ConcreteEvidence.v,EvidenceC,": Set :=
+| mtc: EvidenceC
+| nnc: N_ID -> BS -> EvidenceC
+| ggc: Plc -> ASP_PARAMS -> BS -> EvidenceC -> EvidenceC
+| hhc: Plc -> ASP_PARAMS -> BS -> Evidence -> EvidenceC
+| eec: Plc -> ASP_PARAMS -> BS -> Evidence -> EvidenceC
+| kkc: Plc -> ASP_PARAMS -> Evidence -> EvidenceC
+| kpc: Plc -> ASP_PARAMS -> EvidenceC -> EvidenceC
+| ssc: EvidenceC -> EvidenceC -> EvidenceC.
+
+(** The Evidence Type associated with a Typed Concrete Evidence value *)",5,Inductive
+ConcreteEvidence.v,et_fun,"(ec:EvidenceC) : Evidence :=
+  match ec with
+  | mtc => mt
+  | ggc p params _ ec' => uu p EXTD params (et_fun ec')
+  | hhc p params _ et => uu p COMP params et
+  | eec p params _ et => uu p ENCR params et (* (et_fun ec') *)
+  | kkc p params et' => uu p KILL params et'
+  | kpc p params ec' => uu p KEEP params (et_fun ec')
+                       
+  | nnc ni _ => nn ni
+  | ssc ec1 ec2 => ss (et_fun ec1) (et_fun ec2)
+  end.
+
+(** Evidence Type subterm relation *)",4,Fixpoint
+ConcreteEvidence.v,EvSubT,": Evidence -> Evidence -> Prop :=
+| evsub_reflT : forall e : Evidence, EvSubT e e
+| uuSubT: forall e e' p fwd ps,
+    EvSubT e e' -> 
+    EvSubT e (uu p fwd ps e')
+| ssSublT: forall e e' e'',
+    EvSubT e e' ->
+    EvSubT e (ss e' e'')
+| ssSubrT: forall e e' e'',
+    EvSubT e e'' ->
+    EvSubT e (ss e' e'').
+#[export] Hint Constructors EvSubT : core.
+
+Ltac evSubTFacts :=
+  match goal with
+  | [H: EvSubT (?C _) _ |- _] => invc H
+  | [H: EvSubT _ (?C _) |- _] => invc H
+  | [H: EvSubT _ mt |- _] => invc H
+  | [H: EvSubT mt _ |- _] => invc H
+  end.
+
+Lemma evsubT_transitive: forall e e' e'',
+    EvSubT e e' ->
+    EvSubT e' e'' ->
+    EvSubT e e''.
+Proof.
+  intros.
+  generalizeEverythingElse e''.
+  induction e''; intros;
+    try evSubTFacts;
+       eauto.
+Defined.
+
+(** Typed Concrete Evidence subterm relation *)",5,Inductive
+ConcreteEvidence.v,EvSub,": EvidenceC -> EvidenceC -> Prop :=
+| evsub_refl : forall e : EvidenceC, EvSub e e
+| ggSub: forall e e' p ps bs,
+    EvSub e e' ->
+    EvSub e (ggc p ps bs e')
+          (* TODO: encrypt case here? *)
+| ssSubl: forall e e' e'',
+    EvSub e e' ->
+    EvSub e (ssc e' e'')
+| ssSubr: forall e e' e'',
+    EvSub e e'' ->
+    EvSub e (ssc e' e'').
+#[export] Hint Constructors EvSub : core.
+
+Ltac evSubFacts :=
+  match goal with
+  | [H: EvSub (?C _) _ |- _] => invc H
+  | [H: EvSub _ (?C _) |- _] => invc H
+  | [H: EvSub _ mtc |- _] => invc H
+  | [H: EvSub mtc _ |- _] => invc H
+  end.
+
+(** Subterm relation is preserved through et_fun *)
+Lemma evsub_etfun: forall e e',
+    EvSub e e' ->
+    EvSubT (et_fun e) (et_fun e').
+Proof.
+  intros.
+  induction H; intros;
+    cbn in *; eauto.
+Defined.
+
+Lemma evsub_hh: forall e e' e0,
+    EvSub e0 e' ->
+    EvSubT (et_fun e') e ->
+    EvSubT (et_fun e0) e.
+Proof.
+  intros.
+  generalizeEverythingElse e.
+  induction e; intros; ff.
+  -
+    invc H0.
+    jkjke.
+    assert (e' = mtc).
+    {
+      destruct e'; try solve_by_inversion.
+    }
+    (*
+    assert (e' = mtc \/ (exists p ps et', e' = kkc p ps et')).
+    {
+      destruct e'; try solve_by_inversion.
+      eauto.
+    }
+    door.
+    +
+    subst.
+    ff.
+    +
+      subst.
+      ff.
+     *)
+    subst.
+    ff.
+      
+  -
+    invc H0.
+    jkjke.
+    destruct e'; try solve_by_inversion.
+    ff.
+  -
+    invc H0.
+    +
+      destruct f.
+      ++
+        destruct e'; ff.
+          
+      ++
+        destruct e'; ff.
+          
+      ++
+        destruct e'; ff.
+        invc H; ff; eauto.
+
+      ++
+        destruct e'; ff.
+        
+      ++
+        destruct e'; ff.
+          
+    +
+      eauto.
+  -
+    invc H0.
+    +
+      destruct e'; ff.
+      invc H; ff; eauto.
+    +
+      eauto.
+    +
+      eauto.   
+Qed.
+
+Lemma evsub_transitive: forall e e' e'',
+    EvSub e e' ->
+    EvSub e' e'' ->
+    EvSub e e''.
+Proof.
+  intros e e' e'' H H0.
+  generalizeEverythingElse e''.
+  induction e''; intros; ff; invc H0; eauto.
+Defined.",5,Inductive
+ConcreteEvidence.v,splitEv_l,"(sp:Split) (e:EvC): EvC :=
+  match sp with
+  | (ALL, _) => e
+  | _ => mt_evc
+  end.",3,Definition
+ConcreteEvidence.v,splitEv_r,"(sp:Split) (e:EvC): EvC :=
+  match sp with
+  | (_,ALL) => e
+  | _ => mt_evc
+  end.",3,Definition
+ConcreteEvidence.v,splitEvl,"(sp:Split) (e:EvidenceC) : EvidenceC :=
+  match sp with
+  | (ALL,_) => e
+  | _ => mtc
+  end.",3,Definition
+ConcreteEvidence.v,splitEvr,"(sp:Split) (e:EvidenceC) : EvidenceC :=
+  match sp with
+  | (_,ALL) => e
+  | _ => mtc
+  end.",3,Definition
+Impl_appraisal_alt.v,build_app_comp_evC,"(e:EvidenceC) : EvidenceC :=
+  match e with
+  | mtc => mtc
+              
+  | uuc params p bs e' =>
+    uuc params p (checkASPF params bs)
+        (build_app_comp_evC e')
+  | ggc p bs e' =>
+    ggc p (checkSigF e' p bs)
+        (build_app_comp_evC e')
+  | hhc p bs et =>
+    hhc p (checkHashF et p bs)(*(fromSome 0 (checkHash et p bs))*) et
+  | nnc nid bs =>
+    nnc nid (checkNonceF nid bs)
+  | ssc e1 e2 =>
+    ssc (build_app_comp_evC e1) (build_app_comp_evC e2)
+  | ppc e1 e2 =>
+    ppc (build_app_comp_evC e1) (build_app_comp_evC e2)
+  end.
+
+(*
+(* *** Extra AM Monad defs *** *)",4,Fixpoint
+Impl_appraisal_alt.v,am_add_trace,"(tr':list Ev) : AM_St -> AM_St :=
+  fun '{| am_nonceMap := nm;
+        am_nonceId := ni;
+        st_aspmap := amap;
+        st_sigmap := smap;
+        st_hshmap := hmap;
+        am_st_trace := tr;
+        checked := cs |} =>
+    mkAM_St nm ni amap smap hmap (tr ++ tr') cs.",3,Definition
+Impl_appraisal_alt.v,am_add_tracem,"(tr:list Ev) : AM unit :=
+  modify (am_add_trace tr).",3,Definition
+Impl_appraisal_alt.v,am_run_cvm,"(annt:AnnoTerm) (e:EvidenceC) (et:Evidence) : AM EvidenceC :=
+  let start_st := (mk_st e et [] 0) in
+  let end_st := (run_cvm annt start_st) in
+  am_add_tracem (st_trace end_st) ;;
+  ret (st_ev end_st).",3,Definition
+Impl_appraisal_alt.v,am_run_cvm_comp,"{A:Type} (comp:CVM A) : AM A :=
+  let '(cvm_res, vmst') := (runSt comp empty_vmst) in
+  match cvm_res with
+  | Some v =>
+    am_add_tracem (st_trace vmst') ;;
+    ret v
+  | _ => failm
+  end.
+
+Require Import Maps.",3,Definition
+Impl_appraisal_alt.v,am_get_hsh_gv,"(p:Plc) (i:ASP_ID) : AM BS :=
+  m <- gets st_hshmap ;;
+  let maybeId := map_get m (p,i) in
+  match maybeId with
+  | Some i' => ret i'
+  | None => failm
+  end.",3,Definition
+Impl_appraisal_alt.v,am_get_hsh_golden_val,"(p:Plc) (et:Evidence): AM BS :=
+  (*
+    m <- gets st_aspmap ;;
+    let maybeId := map_get m (p,i) in
+    match maybeId with
+    | Some i' => ret i'
+    | None => failm
+    end.
+   *)
+  ret 0.",3,Definition
+Impl_appraisal_alt.v,am_check_hsh_eq,"(gv:BS) (actual:BS) : AM BS :=
+  ret 1.
+*)",3,Definition
+Cvm_Run.v,run_cvm,"(t:Core_Term) st : cvm_st :=
+  execSt (build_cvm t) st.",3,Definition
+Cvm_Run.v,run_cvm,"' (t:Term) st : cvm_st :=
+  run_cvm (copland_compile t) st.",3,Definition
+Cvm_Run.v,run_cvm_fresh,"(t:Term) : cvm_st :=
+  run_cvm' t empty_vmst.",3,Definition
+Cvm_Run.v,run_cvm_w_config,"(t:Term) (p:Plc) (e:RawEv) : cvm_st :=
+  run_cvm' t (mk_st (evc e mt) [] p 0).",3,Definition
+Cvm_Run.v,run_cvm_rawEv,"(t:Term) (p:Plc) (e:RawEv) : RawEv :=
+  get_bits (st_ev (run_cvm_w_config t p e)).",3,Definition
+Extraction_Cvm_Cake.v,nat,"=>
+""Prelude.Int""
+  [""0"" ""Prelude.succ""]
+  ""(\fO fS n -> if n Prelude.== 0 then fO () else fS (n Prelude.- 1))"".
+Extract Constant Term_Defs.ASP_ID => ""Prelude.Int"".
+Extract Constant Term_Defs.TARG_ID => ""Prelude.Int"".
+Extract Constant Term_Defs.Arg => ""Prelude.String"".
+*)
+
+(*Extract Constant IO_Type.IO ""a"" => ""IO a"". *)
+
+Extract Inductive nat => ""nat"" [""O"" ""S""].
+Extract Inductive bool => ""bool"" [""True"" ""False""].
+Extract Inductive option => ""option"" [""Some"" ""None""].
+
+Extract Inductive unit => unit [ ""()"" ].
+Extract Inductive list => list [ ""[]"" ""( :: )"" ].
+(*Extract Inductive prod => ""( * )"" [ """" ]. *)
+
+Extraction Implicit do_asp [3 4].
+Extraction Implicit do_asp' [3 4].
+(*
+Extraction Implicit do_sig [2 3].
+Extraction Implicit do_sig' [2 3].
+Extraction Implicit do_hash [2].
+Extraction Implicit do_hash' [2].
+*)
+Extraction Implicit parallel_vm_thread [2 3 4].
+Extraction Implicit do_wait_par_thread [2 3 4].
+
+
+Extract Constant sig_params => ""( undefined () )"".
+Extract Constant hsh_params => ""( undefined () )"".
+(* Extract Constant + => ""add"". *)
+
+(*",5,Inductive
+Extraction_Cvm_Cake.v,my_extracted,"(t:Term) (st:cvm_st) (et:Evidence) (ls:RawEv) :=
+  let res := run_cvm' t st in
+  let res' := build_app_comp_evC et ls in
+  let res'' := eval t 0 mt in
+  (res, res', res'').
+*)
+
+
+(*
+Separate Extraction run_cvm' build_app_comp_evC eval cert_style_simple_sig cert_style cert_cache_p1 cert_cache_p0 bg_check par_mut_p0 par_mut_p1 layered_bg_weak layered_bg_strong test_par_nested anno_par_list top_level_thread_count.
+*)
+
+(*
+Extract Constant Nat.add => ""(+)"".
+*)
+
+Separate Extraction (* run_cvm_rawEv *) demo_phrase demo_phrase2 demo_phrase3 client_data_phrase ssl_sig (* run_gen_appraise_w_nonce *) client_demo_am_comp client_demo_am_comp_auth run_am_serve_auth_tok_req CoplandM.Manifest.Manifest. (* privPolicy *)
+
+
+
+(* my_extracted. *)
+
+(*
+Separate Extraction run_cvm'.
+Separate Extraction build_app_comp_evC.
+*)
+
+
+(*
+Extraction anno_par.
+Extraction annotated_par.
+*)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+(*
+Extraction Library Term_Defs.
+ *)
+
+(*
+Recursive Extraction build_app_comp_evC.
+*)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+(*
+Extract Constant Term_Defs.BS => ""B.ByteString"".
+*)
+
+(*Extract Constant Impl_VM.run_cvm => ""Prelude.undefined"". *)
+(*
+Extract Constant GenStMonad.ret => ""return"".
+Extract Constant GenStMonad.bind => ""(>>=)"".
+ *)
+
+
+(*
+Extraction Implicit event_id_span [1].
+Extraction Implicit add_trace [1 2].
+Extraction Implicit add_tracem [1].
+Extraction Implicit inc_remote_event_ids [1].
+*)
+
+
+(*Extraction Implicit wait_par_thread [2 3]. *)
+
+(*
+Unset Extraction SafeImplicits.
+*)
+
+
+(*
+Extraction Implicit add_tracem [1].
+Extraction Implicit tag_ASP [1 2].
+Unset Extraction SafeImplicits.
+*)
+
+(*
+
+Extract Inductive list => ""[]"" [""[]"" ""(:)""].
+Extract Inductive prod => ""(,)"" [""(,)""].
+Print option.
+Extract Inductive option => ""Maybe"" [""Just"" ""Nothing""].
+
+(*
+Extract Inlined Constant nat => ""Int"".
+*)
+
+Extract Inductive nat => ""Int"" [""0"" ""succ""] """".
+*)
+
+
+(*
+Recursive Extraction Term_Defs.AnnoTermPar.
+Recursive Extraction Term_Defs.EvC.
+
+(*Recursive Extraction copland_compile. *)
+Recursive Extraction run_cvm.
+ *)",3,Definition
+IO_Stubs.v,encodeEvRaw,"(e:RawEv): BS.
+Admitted.
+
+(** * Stub for invoking external ASP procedures.  
+      Extracted code should not need to use the Plc or Event_ID parameters 
+      (those can be erased upon extraction). *)",3,Definition
+IO_Stubs.v,do_asp,"(params :ASP_PARAMS) (e:RawEv) (mpl:Plc) (x:Event_ID) : BS.
+Admitted.
+
+(** * Stub for completing a remote communication session with an external AM. *)",3,Definition
+IO_Stubs.v,doRemote_session,"(t:Term) (pTo:Plc) (e:EvC) : EvC.
+Admitted.
+
+(** * Stub to simulate evidence collected by a parallel CVM instance *)",3,Definition
+IO_Stubs.v,parallel_vm_thread,"(l:Loc) (t:Core_Term) (p:Plc) (e:EvC) : EvC.
+Admitted.
+
+
+(** * Stub for a top-level request from a remote client AM  *)",3,Definition
+IO_Stubs.v,am_sendReq,"(t:Term) (pFrom:Plc) (pTo:Plc) (authTok:ReqAuthTok) (e:RawEv) : RawEv.
+Admitted.",3,Definition
+IO_Stubs.v,do_asp,"' (params :ASP_PARAMS) (e:RawEv) (mpl:Plc) (x:Event_ID) : IO BS :=
+  ret (do_asp params e mpl x).",3,Definition
+IO_Stubs.v,doRemote_session,"' (t:Term) (pTo:Plc) (e:EvC) : IO EvC :=
+  ret (doRemote_session t pTo e).",3,Definition
+IO_Stubs.v,do_start_par_thread,"(loc:Loc) (t:Core_Term) (e:RawEv) : IO unit :=
+  ret tt.",3,Definition
+IO_Stubs.v,do_wait_par_thread,"(loc:Loc) (t:Core_Term) (p:Plc) (e:EvC) : IO EvC :=
+  ret (parallel_vm_thread loc t p e).",3,Definition
+IO_Stubs.v,requester_bound,"(t:Term) (fromPl:Plc) (authTok:ReqAuthTok) : bool.
+Admitted.",3,Definition
+IO_Stubs.v,appraise_auth_tok,"(res:AppResultC) : bool.
+Admitted.",3,Definition
+Demo_AM.v,client_demo_am_comp,"(t:Term) : AppResultC :=
+  run_am_sendReq_nonce t dest_plc source_plc.",3,Definition
+Demo_AM.v,client_demo_am_comp_auth,"(t:Term) : AppResultC :=
+  run_am_sendReq_nonce_auth t dest_plc source_plc.
+
+
+
+(*
+
+
+
+
+
+  (*
+  let app_res := run_am_sendReq_nonce_auth t dest_plc (* 0 *) source_plc (* 1 *) in
+  let bool_res := appres_size_lt_zero app_res in
+   *)
+  
+
+(*
+  
+      match app_res with
+      | (ggc_app _ _ kimcheckres _) => true
+      | _ => false (* default_bs *)
+      end in
+
+*)
+
+
+        (*
+  let bool_res :=
+      match kimcheckres with
+      | _ => true
+      end in *)
+      (*
+      match app_res with
+      | eec_app _ _ _
+                (ggc_app _ _ sigcheckres
+                         (ggc_app _ _ _
+                                  (ggc_app _ _ kimcheckres _))) =>
+        true
+      | _ => false
+      end in
+       *)
+
+  
+      
+  if bool_res then
+    (* (am_sendReq_auth client_data_phrase dest_plc source_plc [kimcheckres]) ;; *)
+    ret bool_res
+    (*ret tt *)
+  else
+    ret false.
+
+*)
+
+
+
+(*",3,Definition
+Demo_AM.v,run_client_demo_am_comp,"(t:Term) : AppResultC :=
+  run_am_app_comp (client_demo_am_comp t) mtc_app.
+*)",3,Definition
+Maps.v,MapC,"(A:Type) (B:Type) `{H : EqClass A} := list (A * B).
+
+(** The [empty] map is the empty list. *)",3,Definition
+Maps.v,map_empty,"{A B:Type} `{H : EqClass A} : MapC A B := [].
+
+(** To [get] the binding of an identifier [x], we just need to walk 
+    through the list and find the first [cons] cell where the key 
+    is equal to [x], if any. *)",3,Definition
+Maps.v,map_get,"{A B:Type} `{H : EqClass A} (m : MapC A B ) x : option B :=
+  match m with
+  | [] => None
+  | (k, v) :: m' => if eqb x k then Some v else map_get m' x
+  end.
+
+(** To [set] the binding of an identifier, we just need to [cons] 
+    it at the front of the list. *)",4,Fixpoint
+Maps.v,map_set,"{A B:Type} `{H : EqClass A} (m:MapC A B) (x:A) (v:B) : MapC A B := (x, v) :: m.",3,Definition
+Maps.v,map_vals,"{A B:Type} `{H : EqClass A} (m : MapC A B ) : list B :=
+  match m with
+  | [] => []
+  | (k', v) :: m' => v :: map_vals m'
+  end.
+
+(* A two-way implementation of list maps, where you can lookup from a key, or value *)",4,Fixpoint
+Maps.v,MapD,"(A:Type) (B:Type) `{H : EqClass A} `{H1 : EqClass B} := list (A * B).
+
+(** The [empty] map is the empty list. *)",3,Definition
+Maps.v,mapD_empty,"{A B:Type} `{H : EqClass A} `{H1 : EqClass B} : MapD A B := [].
+
+(** To [get] the binding of an identifier [x], we just need to walk 
+    through the list and find the first [cons] cell where the key 
+    is equal to [x], if any. *)",3,Definition
+Maps.v,mapD_get_value,"{A B:Type} `{H : EqClass A} `{H1 : EqClass B} (m : MapD A B ) x : option B :=
+  match m with
+  | [] => None
+  | (k, v) :: m' => if eqb x k then Some v else mapD_get_value m' x
+  end.",4,Fixpoint
+Maps.v,mapD_get_key,"{A B:Type} `{H : EqClass A} `{H1 : EqClass B} 
+          (m : MapD A B ) (v : B) : option A :=
+  match m with
+  | [] => None
+  | (k, v') :: m' => if eqb v v' then Some k else mapD_get_key m' v
+  end.
+
+
+(** To [set] the binding of an identifier, we just need to [cons] 
+    it at the front of the list. *)",4,Fixpoint
+Maps.v,mapD_set,"{A B:Type} `{H : EqClass A} `{H1 : EqClass B} 
+                    (m:MapD A B) (x:A) (v:B) : MapD A B := (x, v) :: m.",3,Definition
+Maps.v,mapD_vals,"{A B:Type} `{H : EqClass A} `{H1 : EqClass B} (m : MapD A B ) : list B :=
+  match m with
+  | [] => []
+  | (k', v) :: m' => v :: mapD_vals m'
+  end.",4,Fixpoint
+Maps.v,mapD_keys,"{A B : Type} `{H : EqClass A} `{H1 : EqClass B} (m : MapD A B) : list A :=
+  match m with
+  | nil => nil
+  | (k',v') :: m' => k' :: mapD_keys m'
+  end.
+
+(* TODO: Update these proofs to be more general *)
+Lemma mapD_key_values_length : forall m,
+  length (mapD_vals m) = length (mapD_keys m).
+Proof.
+  intros.
+  induction m; simpl.
+  - reflexivity.
+  - destruct a. simpl. rewrite IHm. reflexivity.
+Qed.
+
+Theorem mapD_kv_len_match: forall m,
+  length (mapD_vals m) = length m.
+Proof.
+  intros.
+  induction m; simpl.
+  - reflexivity.
+  - destruct a; simpl; rewrite IHm; reflexivity.
+Qed.
+
+Theorem mapD_get_works : forall m x v,
+  mapD_get_key (mapD_set m x v) v = Some x.
+Proof.
+  intros.
+  induction x; simpl;
+  rewrite Nat.eqb_refl; reflexivity.
+Qed.
+
+(*
+(** Finally, the domain of a map is just the set of its keys. *)",4,Fixpoint
+Maps.v,map_dom,"{K V} (m:MapC K V) : list K :=
+  match m with
+  | [] => []
+  | (k', v) :: m' => k' :: map_dom m'
+  end.
+*)
+
+(** We next introduce a simple inductive relation, [bound_to m x a], that 
+    holds precisely when the binding of some identifier [x] is equal to [a] in 
+    [m] *)",4,Fixpoint
+Maps.v,bound_to,"{A B:Type} `{H : EqClass A} : MapC A B -> A -> B -> Prop :=
+| Bind : forall x m a, map_get m x = Some a -> bound_to m x a.
+
+Lemma bound_to_eq_dec {A B: Type} `{H: EqClass A}:
+  forall m x,
+    {(exists (a:B), bound_to m x a)} + {not (exists (a:B), bound_to m x a)}.
+Proof.
+  intros.
+  generalizeEverythingElse m.
+  induction m; intros.
+  -
+    right.
+    unfold not.
+    intros.
+    destruct_conjs.
+    invc H1.
+    simpl in *.
+    solve_by_inversion.
+  - specialize IHm with x.
+    destruct IHm.
+    * (* bound_to m x a *)
+      destruct a.
+      destruct (eqb x a) eqn:E.
+      ** (* x = a *)
+         left. exists b. econstructor. simpl. 
+         rewrite E. auto.
+      ** (* x <> a *)
+        assert (exists a0, bound_to ((a,b) :: m) x a0). {
+          destruct e. exists x0.
+          inversion H0; subst. econstructor. simpl.
+          rewrite E. auto.
+        }
+        left. auto.
+    * (* ~ (exists a, bound_to m x a )*)
+      destruct a.
+      destruct (eqb x a) eqn:E.
+      ** (* x = a *)
+         left. exists b. econstructor; simpl; rewrite E; auto.
+      ** (* x <> a *)
+         assert (~ (exists a0, bound_to ((a,b) :: m) x a0)). {
+          intros Contra. destruct Contra. inversion H0. subst.
+          unfold map_get in H1. rewrite E in H1. simpl in *.
+          destruct n. exists x0. econstructor. apply H1.
+         }
+         right. auto.
+Qed.",5,Inductive
+More_lists.v,disjoint_lists,"(l l': list A): Prop :=
+    forall x, In x l -> In x l' -> False.
+
+  Lemma nodup_append:
+    forall l l': list A,
+      NoDup l -> NoDup l' ->
+      disjoint_lists l l' ->
+      NoDup (l ++ l').
+  Proof.
+    intros.
+    induction H.
+    - rewrite app_nil_l; auto.
+    - rewrite <- app_comm_cons.
+      apply NoDup_cons.
+      + intro.
+        apply in_app_iff in H3.
+        destruct H3; intuition.
+        apply H1 in H3; try tauto; simpl; auto.
+      + apply IHNoDup. unfold disjoint_lists; intros.
+        apply H1 in H4; try tauto.
+        simpl; auto.
+  Qed.
+
+  Lemma in_cons_app_cons:
+    forall x y z (l: list A),
+      In x (y :: l ++ [z]) <->
+      x = y \/ In x l \/ x = z.
+  Proof.
+    intros.
+    rewrite app_comm_cons.
+    rewrite in_app_iff; simpl.
+    intuition.
+  Qed.
+
+  (** * Earlier *)
+
+  (** Is [x] earlier than [y] in list [l]?  This definition is used in
+      contexts in which [l] has no duplicates. *)
+
+  Definition earlier (l: list A) (x y: A) :=
+    exists n,
+      In x (firstn n l) /\
+      In y (skipn n l).
+
+  Lemma earlier_in_left:
+    forall l x y,
+      earlier l x y -> In x l.
+  Proof.
+    intros.
+    destruct H as [i].
+    destruct H.
+    apply firstn_in in H; auto.
+  Qed.
+
+  Lemma earlier_in_right:
+    forall l x y,
+      earlier l x y -> In y l.
+  Proof.
+    intros.
+    destruct H as [i].
+    destruct H.
+    apply skipn_in in H0; auto.
+  Qed.
+
+  (** [x] is earlier than [y] in [p ++ q] if [x] is earlier than [y]
+      in [p].  *)
+
+  Lemma earlier_left:
+    forall p q x y,
+      earlier p x y -> earlier (p ++ q) x y.
+  Proof.
+    intros.
+    destruct H as [i].
+    destruct H.
+    exists i.
+    split.
+    - rewrite firstn_app.
+      apply in_or_app.
+      left; auto.
+    - rewrite skipn_app.
+      apply in_or_app.
+      left; auto.
+  Qed.
+
+  (** [x] is earlier than [y] in [p ++ q] if [x] is earlier than [y]
+      in [q].  *)
+
+  Lemma earlier_right:
+    forall p q x y,
+      earlier q x y -> earlier (p ++ q) x y.
+  Proof.
+    intros.
+    destruct H as [i].
+    destruct H.
+    exists (length p + i).
+    assert (G: length p + i - length p = i).
+    lia.
+    split.
+    - rewrite firstn_app.
+      apply in_or_app.
+      right.
+      rewrite G; auto.
+    - rewrite skipn_app.
+      apply in_or_app.
+      right.
+      rewrite G; auto.
+  Qed.
+
+  Lemma earlier_append:
+    forall p q x y,
+      In x p -> In y q ->
+      earlier (p ++ q) x y.
+  Proof.
+    intros.
+    exists (length p).
+    rewrite firstn_append.
+    rewrite skipn_append.
+    auto.
+  Qed.
+
+  Lemma earlier_append_iff:
+    forall x y (l l': list A),
+      earlier (l ++ l') x y <->
+      earlier l x y \/ In x l /\ In y l' \/ earlier l' x y.
+  Proof.
+    split; intros.
+    - destruct H as [i].
+      destruct H.
+      rewrite firstn_app in H.
+      rewrite skipn_app in H0.
+      pose proof (le_lt_dec i (length l)) as G.
+      destruct G as [G|G].
+      + rewrite <- Nat.sub_0_le in G; auto.
+        rewrite G in *.
+        simpl in *.
+        rewrite app_nil_r in H.
+        apply in_app_iff in H0.
+        destruct H0.
+        * left; exists i; auto.
+        * right; left; split; auto.
+          apply firstn_in in H; auto.
+      + right.
+        rewrite firstn_all_n in H; try lia.
+        rewrite skipn_all_n in H0; try lia.
+        rewrite app_nil_l in H0.
+        apply in_app_iff in H.
+        destruct H.
+        * apply skipn_in in H0; auto.
+        * right.
+          exists (i - length l); auto.
+    - destruct H.
+      apply earlier_left; auto.
+      destruct H.
+      + destruct H.
+        apply earlier_append; auto.
+      + apply earlier_right; auto.
+  Qed.
+
+  Lemma earlier_cons:
+    forall p x y,
+      In y p ->
+      earlier (x :: p) x y.
+  Proof.
+    intros; exists 1; simpl; auto.
+  Qed.
+
+  Lemma earlier_cons_shift:
+    forall p x y z,
+      earlier p x y ->
+      earlier (z :: p) x y.
+  Proof.
+    intros.
+    destruct H as [i].
+    destruct H.
+    exists (S i).
+    simpl; auto.
+  Qed.
+
+End More_lists.
+
+Unset Implicit Arguments.",3,Definition
+EqClass.v,general_list_eq_class_eqb,"{A : Type} `{H : EqClass A} (l1 l2 : list A) : bool :=
+  match l1, l2 with
+  | nil, nil => true
+  | cons h1 t1, cons h2 t2 => andb (eqb h1 h2) (general_list_eq_class_eqb t1 t2)
+  | _, _ => false
+  end.
+
+Theorem general_list_eqb_leibniz : forall {A : Type} `{H : EqClass A},
+  forall (a1 a2 : list A), general_list_eq_class_eqb a1 a2 = true <-> a1 = a2.
+Proof.
+  induction a1; destruct a2; split; intros; simpl in *; eauto; try congruence.
+  - eapply Bool.andb_true_iff in H0. destruct H0.
+    erewrite eqb_leibniz in H0; subst. 
+    rewrite IHa1 in H1; subst; eauto.
+  - inv H0.
+    eapply Bool.andb_true_iff; split; eauto.
+    * eapply eqb_leibniz; eauto.
+    * erewrite IHa1; eauto.
+Qed.
+
+Global Instance EqClass_extends_to_list (A : Type) `{H : EqClass A} : EqClass (list A) := {
+  eqb := general_list_eq_class_eqb ;
+  eqb_leibniz := general_list_eqb_leibniz
+}.
+
+Global Instance nat_EqClass : EqClass nat :=
+  { eqb:= PeanoNat.Nat.eqb;
+    eqb_leibniz := PeanoNat.Nat.eqb_eq }.",4,Fixpoint
+EqClass.v,eqbPair,"{A B:Type}`{H:EqClass A}`{H':EqClass B} (p1:A*B) (p2:A*B) : bool :=
+  match (p1,p2) with
+  | ((a1,b1), (a2,b2)) => andb (eqb a1 a2) (eqb b1 b2)
+  end.
+
+Lemma beq_pair_true{A B:Type}`{H:EqClass A}`{H':EqClass B} : forall (p1 p2:(A*B)),
+    eqbPair p1 p2 = true -> p1 = p2.
+Proof.
+  intros.
+  unfold eqbPair in *.
+  repeat break_let.
+  assert (a = a0).
+  {
+    assert (eqb a a0 = true).
+    {
+      destruct (eqb a a0); try solve_by_inversion.
+    }
+    eapply eqb_leibniz; eauto.
+  }
+  
+  assert (b = b0).
+  {
+        assert (eqb b b0 = true).
+        {
+          destruct (eqb b b0); try reflexivity.
+          cbv in *.
+          repeat break_let.
+          break_if; solve_by_inversion.     
+        }
+    eapply eqb_leibniz; eauto.
+  }
+  subst.
+  reflexivity.
+Defined.
+
+                                                             
+
+(*
+#[global]
+Instance pair_EqClass{A B:Type}`{H:EqClass A}`{H':EqClass B} : EqClass (A*B) :=
+  { eqb:= eqbPair;
+    eqb_leibniz := beq_pair_true }.
+*)",3,Definition
+CopParserQC.v,ascii_from_range,"(min max : nat) : G ascii := 
+  bind (choose (min,max)) (fun val =>
+    ret (ascii_of_nat val)).",3,Definition
+CopParserQC.v,correct_ascii_from_range,"(min max : nat) : ascii -> bool :=
+  fun x => let x' : nat := nat_of_ascii x in
+  andb (Nat.leb min x') (Nat.leb x' max).",3,Definition
+CopParserQC.v,genLower,: G ascii := ascii_from_range 97 122.,3,Definition
+CopParserQC.v,isLowerCorrect,": ascii -> bool := correct_ascii_from_range 97 122.
+QuickChick (forAll (genLower) isLowerCorrect).
+
+(** Digits *)",3,Definition
+CopParserQC.v,genDigits,: G ascii := ascii_from_range 48 57.,3,Definition
+CopParserQC.v,isDigitsCorrect,": ascii -> bool := correct_ascii_from_range 48 57.
+QuickChick (forAll (genDigits) isDigitsCorrect).
+
+(** Underscores *)",3,Definition
+CopParserQC.v,genUnderScore,: G ascii := ascii_from_range 95 95.,3,Definition
+CopParserQC.v,isUnderScoreCorrect,": ascii -> bool := correct_ascii_from_range 95 95.
+QuickChick (forAll (genUnderScore) isUnderScoreCorrect).
+
+(** Uppercase *)",3,Definition
+CopParserQC.v,genUpper,: G ascii := ascii_from_range 65 90.,3,Definition
+CopParserQC.v,isUpperCorrect,": ascii -> bool := correct_ascii_from_range 65 90.
+QuickChick (forAll (genUpper) isUpperCorrect).
+
+(** ID chars *)",3,Definition
+CopParserQC.v,genIdChar,": G ascii := 
+  oneOf [genLower; genUpper; genDigits; genUnderScore].",3,Definition
+CopParserQC.v,genIdCharCorrect,"(x : ascii) : bool :=
+  orb ((correct_ascii_from_range 97 122) x)
+    (orb ((correct_ascii_from_range 48 57) x) 
+      (orb ((correct_ascii_from_range 95 95) x) ((correct_ascii_from_range 65 90) x)
+      )
+    ).
+
+QuickChick (forAll (genIdChar) genIdCharCorrect).
+
+(** Symbols *)",3,Definition
+CopParserQC.v,genSymbolTail,"(sz : nat) : G string :=
+  match sz with
+  | 0 => ret """"
+  | S sz' => freq [
+    (1,   x <- genIdChar ;;
+          ret (String x EmptyString));
+    (sz,  h <- genIdChar ;;
+          t <- genSymbolTail sz' ;;
+          ret (String h t))
+    ]
+  end.",4,Fixpoint
+CopParserQC.v,genSymbol,": G string :=
+  h <- genLower ;;
+  tailSize <- choose (0,20) ;; 
+  (* NOTE: We enforce a size limit here, it is questionable
+           if we can really justify this as arbitrary then.
+           But, I have faith that if it can work for any string length 1-21
+           the parser will work for any string. the buck has to stop somewhere
+           might as well be here *)
+  t <- genSymbolTail tailSize ;;
+  ret (String h t).",3,Definition
+CopParserQC.v,genSymbolCorrect,"(s : string) : bool :=
+  match CopParser.parseSymbol (CopParser.tokenize s) map_empty with
+  | CopParser.SomeE (m, s, t) => (Nat.leb (List.length t) 0)
+  | CopParser.NoneE _ => false
+  | CopParser.OutOfFuel => false
+  end.",3,Definition
+CopParserQC.v,shrinkSymbolTail,"(s : string) : list (string) :=
+  match s with
+  | EmptyString => []
+  | String h t => [t] ++ (map (fun t' => (String h t')) (shrinkSymbolTail t))
+  end.
+
+(* Only difference is that here, we enforce keeping the first letter 
+  (as it might be the only lower-case letter) *)",4,Fixpoint
+CopParserQC.v,shrinkSymbol,"(s : string) : list (string) :=
+  match s with
+  | EmptyString => []
+  | String h t => (map (fun t' => (String h t')) (shrinkSymbolTail t))
+  end.
+
+QuickChick (forAll genSymbol genSymbolCorrect).
+
+(******************************************************************)
+(******************************************************************)
+(******************************************************************)
+(*               Starting Copland Generators                      *)
+(******************************************************************)
+(******************************************************************)
+(******************************************************************)
+
+
+(******************************************************************)
+(** Plc *)
+(******************************************************************)
+
+(*** Show *)
+#[local]
+Instance showPlc : Show (Plc) :=
+    {
+        show p := let x : nat := p in
+                  show x
+    }.",3,Definition
+CopParserQC.v,string_to_nat,"(ns : string) : nat :=
+    fold_left 
+        (fun n d => 10 * n + (nat_of_ascii d - nat_of_ascii ""0""%char))
+        (CopParser.list_of_string ns)
+        0.
+
+Conjecture showPlcValid : forall (n : Plc), string_to_nat (show n) = n.
+
+QuickChick showPlcValid.
+
+(*** Dec *)",3,Definition
+CopParserQC.v,plc_equality,"(plc1 plc2 : Plc) : bool := Nat.eqb plc1 plc2.
+
+#[local]
+Instance decPlc (p1 p2 : Plc) : Dec (p1 = p2).
+constructor. unfold ssrbool.decidable.
+generalize dependent p2.
+induction p1; destruct p2; adec.
+specialize IHp1 with p2.
+destruct IHp1; adec. left. auto.
+Defined.
+
+(*** Gen *)
+#[local]
+Instance arbitraryPlc : Arbitrary (Plc). Defined.
+
+(******************************************************************)
+(** ASP_ID *)
+(******************************************************************)
+
+(*** Gen, GenSize, Shrink - All inherited from string *)
+#[local]
+Instance showASP_ID : Show (ASP_ID).
+constructor. tauto. Defined.
+
+(*** Dec *)",3,Definition
+CopParserQC.v,asp_id_equality,"(a1 a2 : ASP_ID) : bool := String.eqb a1 a2.
+
+#[local]
+Instance decASP_ID (a1 a2 : ASP_ID) : Dec (a1 = a2). 
+dec_eq.
+(* constructor. unfold ssrbool.decidable. 
+generalize dependent a2.
+induction a1.
+- induction a2.
+  * left. reflexivity.
+  * right. intro C. inversion C.
+- intro. destruct a2.
+  * right. intro C. inversion C.
+  * destruct (Ascii.eqb a a0) eqn:E.
+    ** rewrite Ascii.eqb_eq in E. subst. destruct (IHa1 a2) as [H1 | H2]; subst.
+      *** left. reflexivity.
+      *** right. intro C. inversion C. congruence.
+    ** rewrite Ascii.eqb_neq in E. right. intro C. inversion C. congruence. *)
+Defined.
+
+(*** Gen *)
+#[local]
+Instance genASP_ID : Gen (ASP_ID) :=
+{
+  arbitrary := genSymbol
+}.
+
+(*** Shrink *)
+#[local] 
+Instance shrinkASP_ID : Shrink (ASP_ID) :=
+{
+  shrink := shrinkSymbol
+}.
+
+(*** Arbitrary *)
+#[local]
+Instance arbitraryASP_ID : Arbitrary (ASP_ID). Defined.
+
+(******************************************************************)
+(** TARG_ID *)
+(******************************************************************)
+
+(*** Show TARG_ID *)
+#[local]
+Instance showTARG_ID : Show (TARG_ID).
+constructor. tauto. Defined.
+
+(*** Dec *)",3,Definition
+CopParserQC.v,targ_id_equality,"(t1 t2 : TARG_ID) : bool := String.eqb t1 t2.
+
+#[local]
+Instance decTARG_ID (t1 t2 : TARG_ID) : Dec (t1 = t2).
+dec_eq. Defined.
+
+(*** Gen *)
+#[local]
+Instance genTARG_ID : Gen (TARG_ID) :=
+{ arbitrary := genSymbol }.
+
+(*** Shrink *)
+#[local]
+Instance shrinkTARG_ID : Shrink (TARG_ID) :=
+{ shrink := shrinkSymbol }.
+
+(*** Arbitrary *)
+#[local]
+Instance arbitraryTARG_ID : Arbitrary (TARG_ID). Defined.
+
+(******************************************************************)
+(** Arg *)
+(******************************************************************)
+
+(*** Dec *)
+
+#[local]
+Instance decArg (a1 a2 : Arg) : Dec (a1 = a2).
+dec_eq.
+Defined.
+
+(*** Gen (list Arg) *)
+(* Forcing this to be nil every time *)",3,Definition
+CopParserQC.v,gListArg,": G (list Arg) := ret nil.
+#[local]
+Instance shrinkListArg : Shrink (list Arg) :=
+{
+  shrink := (fun x => nil)
+}.
+#[local]
+Instance genListArg : Gen (list Arg) :=
+{
+  arbitrary := gListArg
+}.
+
+
+
+(******************************************************************)
+(* Split *)
+(******************************************************************)
+
+(** We must first address SP *)
+#[local]
+Instance showSP : Show (SP) :=
+{
+  show x := match x with ALL => ""+"" | NONE => ""-"" end
+}.
+
+(** Dec SP*)
+#[local]
+Instance decSP (sp1 sp2 : SP) : Dec (sp1 = sp2).
+dec_eq. Defined.
+
+Derive Arbitrary for SP.
+(* Sample (@arbitrary SP _). *)
+
+(** Show Split *)
+#[local]
+Instance showSplit : Show (Split) :=
+{
+  show sp := let (s1,s2) := sp in show s1 ++ "" "" ++ show s2
+}.
+
+(** Dec Split *)
+#[local]
+Instance decSplit (sp1 sp2 : Split) : Dec (sp1 = sp2).
+dec_eq. Defined.
+
+(** G Split *)",3,Definition
+CopParserQC.v,gSplit,": G Split :=
+  s1 <- (@arbitrary SP _) ;;
+  s2 <- (@arbitrary SP _) ;;
+  ret (s1, s2).
+
+(** Gen Split *)
+#[local]
+Instance genSplit : Gen Split :=
+{
+  arbitrary := gSplit
+}.
+
+(** Shrink Split *)",3,Definition
+CopParserQC.v,shrinkSplit_Aux,"(s : Split) : list (Split) :=
+  match s with
+  | (NONE, NONE) => []
+  | (NONE, ALL) => [(NONE, NONE)]
+  | (ALL, NONE) => [(NONE, NONE); (NONE, ALL)]
+  | (ALL, ALL) => [(NONE, NONE); (NONE, ALL); (ALL, NONE)]
+  end.
+
+(** Arbitrary Split*)
+#[local]
+Instance arbitrarySplit : Arbitrary (Split). Defined.
+
+
+(******************************************************************)
+(** FWD *)
+(******************************************************************)
+(*** Show FWD *)
+#[local]
+Instance showFwd : Show (FWD) :=
+{ show x := """" }.
+(*** Dec FWD *)
+#[local]
+Instance decFwd (f1 f2 : FWD) : Dec (f1 = f2).
+dec_eq. Defined.
+(*** G FWD *)",3,Definition
+CopParserQC.v,gFWD,": G (FWD) := ret EXTD.
+(*** Gen FWD *)
+#[local]
+Instance genFWD : Gen (FWD) :=
+{ arbitrary := gFWD }.
+(*** Shrink FWD *)",3,Definition
+CopParserQC.v,shrinkFWD_Aux,"(f : FWD) : list (FWD) :=
+  match f with
+  | EXTD => []
+  | COMP => [EXTD]
+  | ENCR => [COMP]
+  | KILL => [ENCR]
+  | KEEP => [KILL]
+  end.
+#[local]
+Instance shrinkFWD : Shrink (FWD) :=
+{ shrink := shrinkFWD_Aux }.
+(*** Arbitrary FWD *)
+#[local]
+Instance arbitraryFWD : Arbitrary (FWD). Defined. 
+
+
+(******************************************************************)
+(** ASPC and ASP_PARAMS *)
+(******************************************************************)
+
+(*** Show *)
+Open Scope monad_scope.",3,Definition
+CopParserQC.v,showASP_PARAMS_Aux,"(aspp : ASP_PARAMS) `{_ : Show ASP_ID} `{_ : Show TARG_ID} `{Show Plc} : string :=
+    match aspp with
+    | (asp_paramsC a arg p t) =>
+        show a ++ "" "" ++ show p ++ "" "" ++ show t
+    end.
+
+#[local]
+Instance showASP_PARAMS : Show (ASP_PARAMS) :=
+    {
+        show asp := showASP_PARAMS_Aux asp
+    }.
+
+Compute (show (asp_paramsC ""kim"" nil 2 ""ker"")).
+(*** Dec *)
+#[local]
+Instance decASP_PARAMS (a1 a2 : ASP_PARAMS): Dec (a1 = a2).
+dec_eq.
+Defined.
+
+(*** Gen *)
+(* Safe to do here, because we already locked in the rest of the sub-terms arbitraries *)
+Derive Arbitrary for ASP_PARAMS.",3,Definition
+CopParserQC.v,genASP_PARAMS_Correct,"(a : ASP_PARAMS) : bool :=
+  match CopParser.parseASPC (CopParser.tokenize (show a)) map_empty with
+  | CopParser.SomeE (m, s, t) => (Nat.leb (List.length t) 0)
+  | CopParser.NoneE _ => false
+  | CopParser.OutOfFuel => false
+  end.
+
+QuickChick genASP_PARAMS_Correct.
+
+(* Sample (@arbitrary ASP_PARAMS _). *)
+
+(******************************************************************)
+(** ASP *)
+(******************************************************************)
+
+(*** Show *)",3,Definition
+CopParserQC.v,showASP_Aux,"(a : ASP) : string :=
+    match a with
+    | NULL => ""{}""
+    | CPY => ""_""
+    | ASPC sp fwd params => show params
+    | SIG => ""!""
+    | HSH => ""#""
+    | ENC v => ""ENC""
+    end.
+    
+#[local]
+Instance showASP : Show (ASP) :=
+{
+    show := showASP_Aux
+}.
+
+(*** Dec *)
+
+#[local]
+Instance decASP (a1 a2 : ASP): Dec (a1 = a2).
+constructor. unfold ssrbool.decidable.
+destruct a1, a2; try (left; reflexivity); try (right; intro C; inversion C; fail).
+pose proof (decASP_PARAMS a a0).
+inversion H. inversion dec; subst;
+destruct s, s0, f, f0; adec. 
+pose proof (decPlc p p0). inversion H; inversion dec; subst; adec.
+Defined.
+
+(* TODO: This does not GENERATE ENC! 
+but we also do not have a set syntax for ENC to parse...
+Once we get that, then we can add this and all tests should work the same
+*)
+(*** G ASP *)",3,Definition
+CopParserQC.v,gASP,": G ASP :=
+  oneOf [
+    (ret NULL) ; (ret CPY) ; (ret SIG) ; (ret HSH) ;
+    (par <- arbitrary ;; ret (ASPC ALL EXTD par))
+  ].
+
+(*** Gen ASP *)
+#[local]
+Instance genASP : Gen (ASP) :=
+{ arbitrary := gASP }.
+
+(*** Shrink ASP *)",3,Definition
+CopParserQC.v,shrinkASP_Aux,"(a : ASP) : list (ASP) :=
+  match a with
+  | (ASPC sp fwd par) => map (fun p' => (ASPC sp fwd p')) (shrink par)
+  | _ => [] (* If its just a basic ASP we cant shrink *)
+  end.
+
+#[local]
+Instance shrinkASP : Shrink (ASP) :=
+{
+  shrink := shrinkASP_Aux
+}.
+
+(*** Arbitrary ASP *)
+#[local]
+Instance arbitraryASP : Arbitrary (ASP). Defined.
+
+(* Sample (@arbitrary ASP _). *)
+
+(*** Testing *)",3,Definition
+CopParserQC.v,genASP_Correct,"(a : ASP) : bool :=
+  match CopParser.parseASP (CopParser.tokenize (show a)) map_empty with
+  | CopParser.SomeE (m, s, t) => (Nat.eqb (List.length t) 0)
+  | CopParser.NoneE _ => false
+  | CopParser.OutOfFuel => false
+  end.
+
+QuickChick genASP_Correct.",3,Definition
+CopParserQC.v,genASP_parse_correct,"(a : ASP) : option ASP :=
+  match CopParser.parseASP (CopParser.tokenize (show a)) map_empty with
+  | CopParser.SomeE (_, (asp a'), _) => Some a'
+  | _ => None
+  end.
+
+#[local]
+Instance decEqOptionAsp : Dec_Eq (option ASP). dec_eq. Defined.
+
+Conjecture genASP_works : forall (a : ASP), (genASP_parse_correct a) = Some a.
+QuickChick genASP_works.
+
+(******************************************************************)
+(* Term *)
+(******************************************************************)
+(** Show Term *)",3,Definition
+CopParserQC.v,showTerm_Aux,"(t : Term) : string :=
+  match t with
+  | asp a => show a
+  (* This works with just @ or @p *)
+  | att p t' => ""@"" ++ show p ++ "" "" ++ showTerm_Aux t' ++ """"
+  | lseq t1 t2 => ""(("" ++ showTerm_Aux t1 ++ "") -> ("" ++ showTerm_Aux t2 ++ ""))""
+  | bseq (s1,s2) t1 t2 => 
+    ""(("" ++ showTerm_Aux t1 ++ "") "" ++ show s1 ++ ""<"" ++ show s2 ++ "" ("" ++ showTerm_Aux t2 ++ ""))""
+  | bpar (s1,s2) t1 t2 =>
+    ""(("" ++ showTerm_Aux t1 ++ "") "" ++ show s1 ++ ""~"" ++ show s2 ++ "" ("" ++ showTerm_Aux t2 ++ ""))""
+  end.
+
+#[local]
+Instance showTerm : Show (Term) :=
+{
+  show := showTerm_Aux
+}.
+
+
+(** Dec Term *)
+#[local]
+Instance decTerm (t1 t2 : Term) : Dec (t1 = t2).
+constructor. unfold ssrbool.decidable.
+generalize dependent t2.
+induction t1; intros; try (destruct a, a0); try (destruct t2);
+adec.
+- pose proof (decASP a a0).
+  qinv H. qinv dec; adec.
+- destruct (Nat.eqb p p0) eqn:plc.
+  * (* places equal*)
+    rewrite Nat.eqb_eq in *. subst. specialize IHt1 with t2.
+    destruct IHt1; subst; adec.
+  * rewrite Nat.eqb_neq in *. subst; adec.
+- specialize IHt1_1 with t2_1. specialize IHt1_2 with t2_2.
+  destruct IHt1_1; destruct IHt1_2; simpl; subst; adec.
+- destruct s, s0, s, s1, s0, s2; adec;
+  specialize IHt1_1 with t2_1; specialize IHt1_2 with t2_2;
+  destruct IHt1_1; destruct IHt1_2; simpl; subst; adec.
+- destruct s, s0, s, s1, s0, s2; adec;
+  specialize IHt1_1 with t2_1; specialize IHt1_2 with t2_2;
+  destruct IHt1_1; destruct IHt1_2; simpl; subst; adec.
+Defined.
+
+#[local]
+Instance decEqTerm (t1 t2 : Term) : Dec_Eq (Term).
+dec_eq. Defined.
+
+(** G Term *)",4,Fixpoint

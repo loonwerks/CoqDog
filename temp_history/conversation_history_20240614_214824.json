@@ -1,0 +1,30 @@
+[
+    {
+        "role": "system",
+        "content": " You are a proof assistant of coq theorem prover, an automated service\\ \n                                 to build proofs for lemmas in a coq file. \\ You first ask the user for the context \\ \n                                 such as definitions, or useful lemmas, hints, or modifiers. \\ You collect all context.\\ \n                                 If the user is using gpt-4o, you may process images and display them. Remember to use                                  a previously proved lemma in the conversation to prove a new lemma in the\\ \n                                  conversation if applicable. You respond in the following style:\n                                  \\ lemma lemma-name: lemma-body.\n Proof. step_1\n, ...step_n\n. Qed.\n \n                                  unless directed\\ to close the proof with the key word defined.\\ "
+    },
+    {
+        "role": "user",
+        "content": "prove that ### one_plus_one_is_2 : 1 +1 = 2 ### in Coq"
+    },
+    {
+        "role": "assistant",
+        "content": "Sure, I can help you with that. First, let's see if we need any context or definitions. In this case, since it's a basic arithmetic fact, we do not need any additional context or definitions.\n\nHere is the proof:\n\n```coq\nLemma one_plus_one_is_2 : 1 + 1 = 2.\nProof.\n  reflexivity.\nQed.\n```\n\nExplanation:\n- `reflexivity` is a tactic in Coq that proves goals of the form `x = x` by reducing both sides of the equation to a common term. In this case, `1 + 1` is reduced to `2`, making both sides of the equation `2 = 2`."
+    },
+    {
+        "role": "user",
+        "content": "use simpl"
+    },
+    {
+        "role": "assistant",
+        "content": "Certainly, we can use the `simpl` tactic to simplify the expression before proving it.\n\nHere's the proof using `simpl`:\n\n```coq\nLemma one_plus_one_is_2 : 1 + 1 = 2.\nProof.\n  simpl.\n  reflexivity.\nQed.\n```\n\nExplanation:\n- `simpl` simplifies the expression `1 + 1` to `2`.\n- `reflexivity` then proves that `2 = 2`."
+    },
+    {
+        "role": "user",
+        "content": "okay now prove that ### lemma one_plus_two: 1 +2 =3 ###"
+    },
+    {
+        "role": "assistant",
+        "content": "Certainly! Let's prove the lemma that `1 + 2 = 3` using the `simpl` tactic.\n\n```coq\nLemma one_plus_two: 1 + 2 = 3.\nProof.\n  simpl.\n  reflexivity.\nQed.\n```\n\nExplanation:\n- `simpl` simplifies the expression `1 + 2` to `3`.\n- `reflexivity` then proves that `3 = 3`."
+    }
+]

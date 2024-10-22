@@ -1,0 +1,1200 @@
+item-name,item-body,label_int,label
+AM,:= St AM_St,2,Definition
+am_newNonce,"(bs:BS) : AM nat :=
+  oldSt <- get ;;
+  let oldMap := am_nonceMap oldSt in
+  let oldId := am_nonceId oldSt in
+  let newMap := map_set oldMap oldId bs in
+  let newId := oldId + 1 in
+  put (mkAM_St newMap newId) ;;
+  ret oldId",2,Definition
+am_getNonce,"(nid:nat) : AM BS :=
+  oldSt <- get ;;
+  let oldMap := am_nonceMap oldSt in
+  let resopt := map_get oldMap nid in
+  match resopt with
+  | Some res => ret res
+  | None => failm
+  end",2,Definition
+am_runCvm_nonce,"(t:Term) (p:Plc) (bs:BS) : AM (nat * RawEv) :=
+  nid <- am_newNonce bs ;;
+  ret (nid, run_cvm_rawEv t p [bs])",2,Definition
+empty_amst,":=
+  mkAM_St map_empty 0 (* [] [] *)",2,Definition
+Range,: Set := nat * nat,2,Definition
+range,"x :=
+  match x with
+  | aasp r _ => r
+  | aatt r _ _ => r
+  | alseq r _ _ => r
+  | abseq r _ _ _ => r
+  | abpar r _ _ _ => r
+  end",2,Definition
+annotated,"x :=
+  snd (anno x 0)",2,Definition
+checkASP,"(params:ASP_PARAMS) (bs:BS) : Opt BS :=
+  Some (checkASP' params bs)",2,Definition
+checkHH,"(params:ASP_PARAMS) (bs:BS) (e:Evidence) : Opt BS :=
+  Some (checkHH' params bs e)",2,Definition
+checkEE,"(params:ASP_PARAMS) (bs:BS) : Opt BS := 
+Some (checkEE' params bs)",2,Definition
+decrypt_bs_to_rawev,"' (bs:BS) (params:ASP_PARAMS) : AM RawEv :=
+  ret (decrypt_bs_to_rawev bs params)",2,Definition
+check_asp_EXTD,"' (params:ASP_PARAMS) (p:Plc) (sig:BS) (ls:RawEv) : AM BS :=
+  ret (check_asp_EXTD params p sig ls)",2,Definition
+checkNonce,"' (nid:nat) (nonceCandidate:BS) : AM BS :=
+  nonceGolden <- am_getNonce nid ;;
+  ret (checkNonce nonceGolden nonceCandidate)",2,Definition
+peel_bs,"(ls:RawEv) : Opt (BS * RawEv) :=
+  match ls with
+  | bs :: ls' => ret (bs, ls')
+  | _ => failm
+  end",2,Definition
+reconstruct_ev,"(e:EvC) : Opt EvidenceC :=
+  match e with
+  | evc ls et => reconstruct_ev' ls et
+  end",2,Definition
+spc_ev,"(sp:SP) (e:EvidenceC) : EvidenceC :=
+  match sp with
+  | ALL => e
+  | NONE => mtc
+  end",2,Definition
+cvm_evidence_denote_asp,"(a:ASP) (p:Plc) (e:EvidenceC) (x:Event_ID): EvidenceC :=
+  match a with
+  | NULL => mtc
+  | CPY => e
+  | ASPC sp fwd params =>
+    match fwd with
+    | COMP => hhc p params
+                 (do_asp params (encodeEv (spc_ev sp e)) p x)
+                 (sp_ev sp (et_fun e))
+    | EXTD => ggc p params
+                 (do_asp params (encodeEv (spc_ev sp e)) p x)
+                 (spc_ev sp e)
+    | ENCR => eec p params
+                 (do_asp params (encodeEv (spc_ev sp e)) p x)
+                 (sp_ev sp (et_fun e))
+    | KEEP => (spc_ev sp e)
+    | KILL => mtc (* kkc p params (sp_ev sp (et_fun e)) *)
+    end
+  | SIG => ggc p sig_params
+              (do_asp sig_params (encodeEv e) p x)
+              e
+  | HSH => hhc p hsh_params
+              (do_asp hsh_params (encodeEv e) p x)
+              (et_fun e)
+  | ENC q => eec p (enc_params q)
+                (do_asp (enc_params q) (encodeEv e) p x)
+                (et_fun e)
+  end",2,Definition
+checkASP,' (params:ASP_PARAMS) (bs:BS) : BS,2,Definition
+checkHH,' (params:ASP_PARAMS) (bs:BS) (e:Evidence) : BS,2,Definition
+checkEE,' (params:ASP_PARAMS) (bs:BS) : BS,2,Definition
+gen_nonce_bits,: BS,2,Definition
+decrypt_bs_to_rawev,(bs:BS) (params:ASP_PARAMS) : RawEv,2,Definition
+check_asp_EXTD,(params:ASP_PARAMS) (p:Plc) (sig:BS) (ls:RawEv) : BS,2,Definition
+checkNonce,(nonceGolden:BS) (nonceCandidate:BS) : BS,2,Definition
+doRemote_session,(t:Term) (pTo:Plc) (e:EvC) : EvC,2,Definition
+parallel_vm_thread,(l:Loc) (t:Term) (p:Plc) (e:EvC) : EvC,2,Definition
+shuffled_events,(el1:list Ev) (el2:list Ev) : list Ev,2,Definition
+cvm_events_core,(t:Core_Term) (p:Plc) (e:Evidence) : list Ev,2,Definition
+cvm_evidence_core,(t:Core_Term) (p:Plc) (e:EvC) : EvC,2,Definition
+cvm_events,"(t:Term) (p:Plc) (e:Evidence) : list Ev :=
+  cvm_events_core (copland_compile t) p e",2,Definition
+cvm_evidence,"(t:Term) (p:Plc) (e:EvC) : EvC :=
+  cvm_evidence_core (copland_compile t) p e",2,Definition
+BS,: Set,2,Definition
+default_bs,: BS,2,Definition
+passed_bs,: BS,2,Definition
+failed_bs,: BS,2,Definition
+splitEv_l,"(sp:Split) (e:EvC): EvC :=
+  match sp with
+  | (ALL, _) => e
+  | _ => mt_evc
+  end",2,Definition
+splitEv_r,"(sp:Split) (e:EvC): EvC :=
+  match sp with
+  | (_,ALL) => e
+  | _ => mt_evc
+  end",2,Definition
+splitEvl,"(sp:Split) (e:EvidenceC) : EvidenceC :=
+  match sp with
+  | (ALL,_) => e
+  | _ => mtc
+  end",2,Definition
+splitEvr,"(sp:Split) (e:EvidenceC) : EvidenceC :=
+  match sp with
+  | (_,ALL) => e
+  | _ => mtc
+  end",2,Definition
+isLowerAlpha,"(c : ascii) : bool :=
+  let n := nat_of_ascii c in
+    andb (97 <=? n) (n <=? 122)",2,Definition
+isAlpha,"(c : ascii) : bool :=
+  let n := nat_of_ascii c in
+    orb (andb (65 <=? n) (n <=? 90))
+        (andb (97 <=? n) (n <=? 122))",2,Definition
+isDigit,"(c : ascii) : bool :=
+  let n := nat_of_ascii c in
+     andb (48 <=? n) (n <=? 57)",2,Definition
+isAlphaNum,"(c : ascii) : bool :=
+    orb (orb (isAlpha c) (isLowerAlpha c)) (isDigit c)",2,Definition
+isUnderscore,"(c : ascii) : bool :=
+    (nat_of_ascii c) =? 95",2,Definition
+classifyChar,"(c : ascii) : chartype :=
+  if isWhite c then
+    white
+  else if isAlpha c then
+    alpha
+  else if isDigit c then
+    digit
+  else if isUnderscore c then
+    underscore
+  else
+    other",2,Definition
+string_of_list,"(xs : list ascii) : string :=
+  fold_right String EmptyString xs",2,Definition
+token,:= string,2,Definition
+tokenize,"(s : string) : list string :=
+  map string_of_list (tokenize_helper white [] (list_of_string s))",2,Definition
+parser,"(T : Type) :=
+    list token -> optionE (T * list token)",2,Definition
+many,"{T} (p : parser T) (steps : nat) : parser (list T) :=
+  many_helper p [] steps",2,Definition
+expect,"(t : token) : parser unit :=
+  firstExpect t (fun xs => SomeE (tt, xs))",2,Definition
+isIdTail,:= fun x => orb (isAlphaNum x) (isUnderscore x),2,Definition
+symbol_map,:= MapD string nat,2,Definition
+parseSymbol,"(xs : list token) (sm : symbol_map) 
+                         : optionE (symbol_map * string * list token) :=
+    match xs with
+    | [] => NoneE ""Expected identifier""
+    | x::xs' => match (list_of_string x) with
+                | nil => NoneE (""Illegal identifier: nil - is this possible?"")
+                | xh :: xt => if andb (isLowerAlpha xh) (forallb isIdTail xt) then
+                                SomeE (sm, x, xs')
+                              else 
+                                NoneE (""Illegal Identifier: '"" ++ x ++ ""'"")
+                end
+    end",2,Definition
+str_to_nat,"(x : list ascii) : nat :=
+  (fold_left 
+    (fun n d => 10 * n + (nat_of_ascii d - nat_of_ascii ""0""%char))
+    x
+    0
+  )",2,Definition
+parseDigits,"(xs : list token) (sm : symbol_map)
+      : optionE (symbol_map * string * list token) :=
+  match xs with
+  | nil     => NoneE ""Expected digits""
+  | x::xs'  => if (forallb isDigit (list_of_string x))
+                then 
+                  let dig := str_to_nat (list_of_string x) in
+                  SomeE ((map x to dig in sm), x, xs')
+                else NoneE ""Invalid digit sequence""
+  end",2,Definition
+parsePlace,"(xs : list token) (sm : symbol_map)
+                      : optionE (symbol_map * string * list token) :=
+  match xs with
+  | nil => NoneE ""Expected Place""
+  | x::xs' => (* we need places to be either DIGITS or p + DIGITS *)
+              match (list_of_string x) with
+                | nil => NoneE (""Illegal place: nil - is this possible?"")
+                | xh :: xt => if andb (isLowerAlpha xh) (forallb isDigit xt) then
+                              (* we are a p + DIGITS *)
+                                let dig := str_to_nat xt in
+                                SomeE ((map x to dig in sm), x, xs')
+                              else if (forallb isDigit (xh :: xt)) then
+                                (* we are completely a digit *)
+                                let dig := str_to_nat (list_of_string x) in
+                                SomeE ((map x to dig in sm), x, xs')
+                              else 
+                                NoneE (""Illegal Identifier: '"" ++ x ++ ""'"")
+                end
+    end",2,Definition
+spToStr,"(s : SP) :=
+  match s with
+  | ALL => ""+""
+  | NONE => ""-""
+  end",2,Definition
+parserSoundASP,"(p :  list token -> symbol_map
+        -> (optionE (symbol_map * Term * list token))) 
+  (val : string) 
+  (a : ASP) : Prop :=
+    forall s t (sm : symbol_map), 
+    (s = val <-> p (s :: t) sm = SomeE (sm, (asp a), t))
+    /\
+    (s <> val <-> exists m, p (s :: t) sm = NoneE m)",2,Definition
+parseCopy,"(xs : list token) (sm : symbol_map)
+                      : optionE (symbol_map * Term * list token) := 
+  match xs with
+  | nil => NoneE ""Expected a copy""
+  | h :: t => if (h =? ""_"") 
+                then SomeE (sm, (asp CPY), t) 
+                else NoneE ""Invalid CPY""
+  end",2,Definition
+parseASPC,"(xs : list token) (sm : symbol_map)
+                      : optionE (symbol_map * Term * list token) := 
+    let sym1 := parseSymbol xs sm in
+    match sym1 with
+    | OutOfFuel => OutOfFuel
+    | NoneE m => NoneE m
+    | SomeE (sm', x',xs') => 
+        let place := parsePlace xs' sm' in
+        match place with
+        | OutOfFuel => OutOfFuel
+        | NoneE m => NoneE m
+        | SomeE (sm'', x'',xs'') =>   
+                  let sym2 := parseSymbol xs'' sm'' in
+                  match sym2 with
+                  | OutOfFuel => OutOfFuel
+                  | NoneE m => NoneE m
+                  | SomeE (sm''', x''',xs''') => 
+                      match (mapD_get_value sm''' x'') with
+                      (* TODO: Right now we FORCE the place to be digits because
+                        the place is digits in Coq, we should find a way around this
+                        though *)
+                      | None => NoneE ""Failed to find relevant symbol for ASPC""
+                      | Some pNat =>
+                          SomeE (sm''',
+                            (asp (ASPC ALL EXTD (asp_paramsC x' nil pNat x'''))),
+                            xs''')
+                      end
+                  end
+        end
+    end",2,Definition
+parseSign,"(xs : list token) sm : optionE (symbol_map * Term * list token) := 
+  match xs with
+  | nil => NoneE ""Expected a sign""
+  | h :: t => if (h =? ""!"") 
+                then SomeE (sm, (asp SIG), t) 
+                else NoneE ""Invalid SIGN""
+  end",2,Definition
+parseHash,"(xs : list token) sm : optionE (symbol_map * Term * list token) := 
+  match xs with
+  | nil => NoneE ""Expected a hash""
+  | h :: t => if (h =? ""#"") 
+                then SomeE (sm, (asp HSH), t) 
+                else NoneE ""Invalid HASH""
+  end",2,Definition
+parseNull,"(xs : list token) sm : optionE (symbol_map * Term * list token) :=
+  match xs with
+  | nil => NoneE ""Expected NULL""
+  | h :: t => if (h =? ""{}"")
+                then SomeE (sm, (asp NULL), t)
+                else NoneE ""Invalid Null""
+  end",2,Definition
+parseASP,"(xs : list token) (sm : symbol_map)
+                    : optionE (symbol_map * Term * list token) :=
+    match xs with
+    | nil   => NoneE ""Expected ASP""
+    | x::t  =>  
+        match (parseNull xs sm) with
+        | OutOfFuel => OutOfFuel
+        | SomeE x' => SomeE x'
+        | NoneE _ =>
+            match (parseCopy xs sm) with
+            | OutOfFuel => OutOfFuel
+            | SomeE x'' => SomeE x''
+            | NoneE _ =>
+                match (parseASPC xs sm) with
+                | OutOfFuel => OutOfFuel
+                | SomeE x''' => SomeE x'''
+                | NoneE _ =>
+                    match (parseSign xs sm) with
+                    | OutOfFuel => OutOfFuel
+                    | SomeE x'''' => SomeE x''''
+                    | NoneE _ =>
+                        match (parseHash xs sm) with
+                        | OutOfFuel => OutOfFuel
+                        | SomeE x''''' => SomeE x'''''
+                        | NoneE _ => NoneE ""Expected an ASP""
+                        end
+                    end
+                end
+            end
+        end
+    end",2,Definition
+parseBranch,"(xs : list token) (prevT : Term) (sm : symbol_map)
+                : optionE (symbol_map * (Term -> Term) * list token) :=
+    match xs with
+    | nil   => NoneE ""Expected branch""
+    | h::t  => (* we only check head, as this should be one contiguous token *)
+                if (string_dec h ""-<-"")
+                then SomeE (sm, fun t' => (bseq (NONE, NONE) prevT t'), t)
+                else if (string_dec h ""-<+"")
+                then SomeE (sm, fun t' => (bseq (NONE, ALL) prevT t'), t)
+                else if (string_dec h ""+<-"")
+                then SomeE (sm, fun t' => (bseq (ALL, NONE) prevT t'), t)
+                else if (string_dec h ""+<+"")
+                then SomeE (sm, fun t' => (bseq (ALL, ALL) prevT t'), t)
+                else if (string_dec h ""-~-"")
+                then SomeE (sm, fun t' => (bpar (NONE, NONE) prevT t'), t)
+                else if (string_dec h ""-~+"")
+                then SomeE (sm, fun t' => (bpar (NONE, ALL) prevT t'), t)
+                else if (string_dec h ""+~-"")
+                then SomeE (sm, fun t' => (bpar (ALL, NONE) prevT t'), t)
+                else if (string_dec h ""+~+"")
+                then SomeE (sm, fun t' => (bpar (ALL, ALL) prevT t'), t)
+                else NoneE ""Invalid branch""
+    end",2,Definition
+testPhr,":= ""@1 kim 2 ker -> ! -<- @2 (vc 2 sys) -> !""",2,Definition
+testPhr2,":= ""@p1 kim p2 ker -> ! -<- @p2 [(vc p2 sys) -> !]""",2,Definition
+transTestPhr,":= <{ @ 1 [<< ""kim"" 2 ""ker"" >> -> (!) -<- @ 2 [<< ""vc"" 2 ""sys"">> -> !]]}>",2,Definition
+ascii_from_range,"(min max : nat) : G ascii := 
+  bind (choose (min,max)) (fun val =>
+    ret (ascii_of_nat val))",2,Definition
+genLower,: G ascii := ascii_from_range 97 122,2,Definition
+isLowerCorrect,: ascii -> bool := correct_ascii_from_range 97 122,2,Definition
+genDigits,: G ascii := ascii_from_range 48 57,2,Definition
+isDigitsCorrect,: ascii -> bool := correct_ascii_from_range 48 57,2,Definition
+genUnderScore,: G ascii := ascii_from_range 95 95,2,Definition
+isUnderScoreCorrect,: ascii -> bool := correct_ascii_from_range 95 95,2,Definition
+genUpper,: G ascii := ascii_from_range 65 90,2,Definition
+isUpperCorrect,: ascii -> bool := correct_ascii_from_range 65 90,2,Definition
+genIdChar,": G ascii := 
+  oneOf [genLower; genUpper; genDigits; genUnderScore]",2,Definition
+genIdCharCorrect,"(x : ascii) : bool :=
+  orb ((correct_ascii_from_range 97 122) x)
+    (orb ((correct_ascii_from_range 48 57) x) 
+      (orb ((correct_ascii_from_range 95 95) x) ((correct_ascii_from_range 65 90) x)
+      )
+    )",2,Definition
+genSymbol,": G string :=
+  h <- genLower ;;
+  tailSize <- choose (0,20) ;; 
+  (* NOTE: We enforce a size limit here, it is questionable
+           if we can really justify this as arbitrary then",2,Definition
+shrinkSymbol,"(s : string) : list (string) :=
+  match s with
+  | EmptyString => []
+  | String h t => (map (fun t' => (String h t')) (shrinkSymbolTail t))
+  end",2,Definition
+gListArg,: G (list Arg) := ret nil,2,Definition
+gSplit,": G Split :=
+  s1 <- (@arbitrary SP _) ;;
+  s2 <- (@arbitrary SP _) ;;
+  ret (s1, s2)",2,Definition
+shrinkSplit_Aux,"(s : Split) : list (Split) :=
+  match s with
+  | (NONE, NONE) => []
+  | (NONE, ALL) => [(NONE, NONE)]
+  | (ALL, NONE) => [(NONE, NONE); (NONE, ALL)]
+  | (ALL, ALL) => [(NONE, NONE); (NONE, ALL); (ALL, NONE)]
+  end",2,Definition
+gFWD,: G (FWD) := ret EXTD,2,Definition
+shrinkFWD_Aux,"(f : FWD) : list (FWD) :=
+  match f with
+  | EXTD => []
+  | COMP => [EXTD]
+  | ENCR => [COMP]
+  | KILL => [ENCR]
+  | KEEP => [KILL]
+  end",2,Definition
+showASP_PARAMS_Aux,"(aspp : ASP_PARAMS) `{_ : Show ASP_ID} `{_ : Show TARG_ID} `{Show Plc} : string :=
+    match aspp with
+    | (asp_paramsC a arg p t) =>
+        show a ++ "" "" ++ show p ++ "" "" ++ show t
+    end",2,Definition
+showASP_Aux,"(a : ASP) : string :=
+    match a with
+    | NULL => ""{}""
+    | CPY => ""_""
+    | ASPC sp fwd params => show params
+    | SIG => ""!""
+    | HSH => ""#""
+    | ENC v => ""ENC""
+    end",2,Definition
+gASP,": G ASP :=
+  oneOf [
+    (ret NULL) ; (ret CPY) ; (ret SIG) ; (ret HSH) ;
+    (par <- arbitrary ;; ret (ASPC ALL EXTD par))
+  ]",2,Definition
+shrinkASP_Aux,"(a : ASP) : list (ASP) :=
+  match a with
+  | (ASPC sp fwd par) => map (fun p' => (ASPC sp fwd p')) (shrink par)
+  | _ => [] (* If its just a basic ASP we cant shrink *)
+  end",2,Definition
+shrinkTerm_Aux,"(t : Term) : list (Term) :=
+  match t with
+  | asp a => (map (fun a' => asp a') (shrink a))
+  (* | _ => []  *)
+  (* Testing to see how detrimental the shrink is*)
+  | att p t' => 
+    (* vary p or vary t *)
+    [t'] 
+    (* ++ 
+    (map (fun p' => att p' t) (shrink p)) ++ 
+    (map (fun t'' => att p t'') (shrinkTerm_Aux t')) *)
+  | lseq t1 t2 =>
+    [t1 ; t2] 
+    (* ++ 
+    (map (fun t1' => lseq t1' t2) (shrinkTerm_Aux t1)) ++
+    (map (fun t2' => lseq t1 t2') (shrinkTerm_Aux t2)) *)
+  | bseq sp t1 t2 =>
+    [t1 ; t2] ++ (* Vary sp, t1 or t2*)
+    (map (fun sp' => bseq sp' t1 t2) (shrink sp)) 
+    (* ++
+    (map (fun t1' => bseq sp t1' t2) (shrinkTerm_Aux t1)) ++
+    (map (fun t2' => bseq sp t1 t2') (shrinkTerm_Aux t2)) *)
+  | bpar sp t1 t2 =>
+    [t1 ; t2] ++ (* Vary sp, t1 or t2*)
+    (map (fun sp' => bpar sp' t1 t2) (shrink sp)) 
+    (* ++
+    (map (fun t1' => bpar sp t1' t2) (shrinkTerm_Aux t1)) ++
+    (map (fun t2' => bpar sp t1 t2') (shrinkTerm_Aux t2)) *)
+  end",2,Definition
+stat_collect_prop,"(t : Term) :=
+  (fun t => collect (term_seq_size t) (genTerm_Correct t))",2,Definition
+AC_Policy,: Permission -> Object -> Prop,2,Definition
+of,the CVM Monad + monadic helper functions,2,Definition
+put_ev,"(e:EvC) : CVM unit :=
+  st <- get ;;
+     let tr' := st_trace st in
+     let p' := st_pl st in
+     let i := st_evid st in
+     put (mk_st e tr' p' i)",2,Definition
+put_pl,"(p:Plc) : CVM unit :=
+  st <- get ;;
+     let tr' := st_trace st in
+     let e' := st_ev st in
+     let i := st_evid st in
+     put (mk_st e' tr' p i)",2,Definition
+get_ev,": CVM EvC :=
+  st <- get ;;
+  ret (st_ev st)",2,Definition
+get_pl,": CVM Plc :=
+  st <- get ;;
+  ret (st_pl st)",2,Definition
+modify_evm,"(f:EvC -> EvC) : CVM unit :=
+  st <- get ;;
+  let '{| st_ev := e; st_trace := tr; st_pl := p; st_evid := i |} := st in
+  put (mk_st (f e) tr p i)",2,Definition
+add_trace,"(tr':list Ev) : cvm_st -> cvm_st :=
+  fun '{| st_ev := e; st_trace := tr; st_pl := p; st_evid := i |} =>
+    mk_st e (tr ++ tr') p i",2,Definition
+add_tracem,"(tr:list Ev) : CVM unit :=
+  modify (add_trace tr)",2,Definition
+tag_ASP,"(params :ASP_PARAMS) (mpl:Plc) (e:EvC) : CVM Event_ID :=
+  x <- inc_id ;;
+  add_tracem [umeas x mpl params (get_et e)] ;;
+  ret x",2,Definition
+fwd_asp,"(fwd:FWD) (bs:BS) (e:EvC) (p:Plc) (ps:ASP_PARAMS): EvC :=
+  match fwd with
+  | COMP => cons_hsh bs e p ps
+  | EXTD => cons_gg bs e p ps
+  | ENCR => cons_enc bs e p ps
+  | KILL => mt_evc
+  | KEEP => e
+  end",2,Definition
+invoke_ASP,"(fwd:FWD) (params:ASP_PARAMS) : CVM EvC :=
+  e <- get_ev ;;
+  p <- get_pl ;;
+  x <- tag_ASP params p e ;;
+  bs <- do_asp' params (get_bits e) p x ;;
+  ret (fwd_asp fwd bs e p params)",2,Definition
+copyEv,": CVM EvC :=
+  p <- get_pl ;;
+  x <- inc_id ;;
+  add_tracem [copy x p] ;;
+  get_ev",2,Definition
+nullEv,": CVM EvC :=
+  p <- get_pl ;;
+  x <- inc_id ;;
+  add_tracem [null x p] ;;
+  ret mt_evc",2,Definition
+clearEv,": unit -> CVM EvC :=
+  fun _ => ret mt_evc",2,Definition
+do_prim,"(a:ASP_Core) : CVM EvC :=
+  match a with
+  | NULLC => nullEv
+  | CLEAR => clearEv tt
+  | CPYC => copyEv
+  | ASPCC fwd params => invoke_ASP fwd params
+  end",2,Definition
+tag_REQ,"(t:Term) (p:Plc) (q:Plc) (e:EvC) : CVM unit :=
+  reqi <- inc_id ;;
+  add_tracem [req reqi p q t (get_et e)]",2,Definition
+tag_RPY,"(p:Plc) (q:Plc) (e:EvC) : CVM unit :=
+  rpyi <- inc_id ;;
+  add_tracem [rpy rpyi p q (get_et e)]",2,Definition
+remote_session,"(t:Term) (p:Plc) (q:Plc) (e:EvC) : CVM EvC :=
+  tag_REQ t p q e ;;
+  e' <- doRemote_session' t q e ;;
+  add_tracem (cvm_events t q (get_et e)) ;;
+  inc_remote_event_ids t ;;
+  ret e'",2,Definition
+doRemote,"(t:Term) (q:Plc) (e:EvC) : CVM EvC :=
+  p <- get_pl ;;
+  e' <- remote_session t p q e ;;
+  tag_RPY p q e' ;;
+  ret e'",2,Definition
+join_seq,"(e1:EvC) (e2:EvC): CVM unit :=
+  p <- get_pl ;;
+  n <- inc_id ;;
+  put_ev (ss_cons e1 e2) ;;
+  add_tracem [join n p]",2,Definition
+start_par_thread,"(loc:Loc) (t:Core_Term) (e:EvC) : CVM unit :=
+  p <- get_pl ;;
+  do_start_par_thread loc t (get_bits e) ;;
+  add_tracem [cvm_thread_start loc p t (get_et e)]",2,Definition
+wait_par_thread,"(loc:Loc) (t:Core_Term) (e:EvC) : CVM EvC :=
+  p <- get_pl ;;
+  e' <- do_wait_par_thread loc t p e ;;
+  add_tracem [cvm_thread_end loc] ;;
+  inc_par_event_ids t ;;
+  ret e'",2,Definition
+run_cvm,"(t:Core_Term) st : cvm_st :=
+  execSt (build_cvm t) st",2,Definition
+run_cvm,"' (t:Term) st : cvm_st :=
+  run_cvm (copland_compile t) st",2,Definition
+run_cvm_fresh,"(t:Term) : cvm_st :=
+  run_cvm' t empty_vmst",2,Definition
+run_cvm_w_config,"(t:Term) (p:Plc) (e:RawEv) : cvm_st :=
+  run_cvm' t (mk_st (evc e mt) [] p 0)",2,Definition
+run_cvm_rawEv,"(t:Term) (p:Plc) (e:RawEv) : RawEv :=
+  get_bits (st_ev (run_cvm_w_config t p e))",2,Definition
+empty_vmst,:= mk_st (evc [] mt) [] min_id_type 0,2,Definition
+CVM,:= St cvm_st,2,Definition
+client_demo_am_comp,"(t:Term) : AppResultC :=
+  run_am_sendReq_nonce t dest_plc source_plc",2,Definition
+client_demo_am_comp_auth,"(t:Term) : AppResultC :=
+  run_am_sendReq_nonce_auth t dest_plc source_plc",2,Definition
+run_client_demo_am_comp,"(t:Term) : AppResultC :=
+  run_am_app_comp (client_demo_am_comp t) mtc_app",2,Definition
+splitEv_mt,"(sp:SP) (e:Evidence) : Evidence :=
+  match sp with
+  | ALL => e
+  | NONE => mt
+  end",2,Definition
+term_discloses_to_remotes,"(rs: list (Plc*Evidence)) (t:Term) (p:Plc) (e:Evidence) : bool :=
+  existsb (term_discloses_to_remote t p e) rs",2,Definition
+filter_remote_disclosures,"(rs: list (Plc*Evidence)) (p:Plc) (e:Evidence) (ts:list Term):
+  list Term := filter (fun t => negb (term_discloses_to_remotes rs t p e)) ts",2,Definition
+get_aspid,"(ps:ASP_PARAMS): ASP_ID :=
+  match ps with
+  | asp_paramsC i _ _ _ => i
+  end",2,Definition
+term_discloses_to_remotes,"(rs: list (Plc*Evidence)) (t:Term) (p:Plc) (e:Evidence) : bool :=
+  existsb (term_discloses_to_remote t p e) rs",2,Definition
+filter_remote_disclosures,"(rs: list (Plc*Evidence)) (p:Plc) (e:Evidence) (ts:list Term):
+  list Term := filter (fun t => negb (term_discloses_to_remotes rs t p e)) ts",2,Definition
+term_discloses_to_asps,"(ls: list (Plc*ASP_ID*Evidence)) (t:Term) (p:Plc) (e:Evidence) : bool :=
+  existsb (term_discloses_to_asp t p e) ls",2,Definition
+filter_asp_disclosures,"(ls: list (Plc*ASP_ID*Evidence)) (p:Plc) (e:Evidence) (ts:list Term):
+  list Term := filter (fun t => negb (term_discloses_to_asps ls t p e)) ts",2,Definition
+eqbPair,"{A B:Type}`{H:EqClass A}`{H':EqClass B} (p1:A*B) (p2:A*B) : bool :=
+  match (p1,p2) with
+  | ((a1,b1), (a2,b2)) => andb (eqb a1 a2) (eqb b1 b2)
+  end",2,Definition
+eqb_aspid,"`{H : EqClass ID_Type} (a1 a2 : ASP_ID)  : bool :=
+  eqb a1 a2",2,Definition
+eqb_asp_params,"`{H : EqClass ID_Type} `{H : EqClass (list ID_Type)} (ap1 ap2 : ASP_PARAMS) : bool :=
+  match ap1, ap2 with
+  | (asp_paramsC a1 la1 p1 t1), (asp_paramsC a2 la2 p2 t2) =>
+      andb (eqb_aspid a1 a2) 
+        (andb (eqb la1 la2)
+          (andb (eqb p1 p2) 
+                (eqb t1 t2)))
+  end",2,Definition
+eq_asp_params_dec,"`{H : EqClass ID_Type} :
+  forall x y: ASP_PARAMS, {x = y} + {x <> y}",2,Definition
+eq_evidence_dec,": forall `{H : EqClass ID_Type},
+  forall x y : Evidence, {x = y} + {x <> y}",2,Definition
+eq_term_dec,": forall `{H : EqClass ID_Type},
+  forall x y : Term, {x = y} + {x <> y}",2,Definition
+eq_core_term_dec,": forall `{H : EqClass ID_Type},
+  forall x y : Core_Term, {x = y} + {x <> y}",2,Definition
+eq_ev_dec,": forall `{H : EqClass ID_Type},
+  forall x y: Ev, {x = y} + {x <> y}",2,Definition
+eqb_fwd,(fwd1 fwd2 : FWD) : bool,2,Definition
+ES_Range,: Set := nat * nat,2,Definition
+es_range,"es :=
+    match es with
+    | leaf r _ => r
+    | before r _ _ => r
+    | merge r _ _ => r
+    end",2,Definition
+same_rel,"es0 es1 :=
+    forall ev0 ev1,
+      prec es0 ev0 ev1 <-> prec es1 ev0 ev1",2,Definition
+supreme,"es e :=
+    ev_in e es /\ forall e0, ev_in e0 es -> ~prec es e e0",2,Definition
+encodeEvBits,"(e:EvC): BS :=
+  match e with
+  | (evc bits _) => encodeEvRaw bits
+  end",2,Definition
+cons_gg,"(sig:BS) (e:EvC) (p:Plc) (ps:ASP_PARAMS): EvC :=
+  match e with
+  | evc bits et => evc (sig :: bits) (uu p EXTD ps et)
+  end",2,Definition
+cons_hsh,"(hsh:BS) (e:EvC) (p:Plc) (ps:ASP_PARAMS): EvC :=
+  match e with
+  | evc _ et => evc [hsh] (uu p COMP ps et)
+  end",2,Definition
+cons_enc,"(enc:BS) (e:EvC) (p:Plc) (ps:ASP_PARAMS): EvC :=
+  match e with
+  | evc _ et => evc [enc] (uu p ENCR ps et)
+  end",2,Definition
+ss_cons,"(e1:EvC) (e2:EvC): EvC :=
+  match (e1, e2) with
+  | (evc bits1 et1, evc bits2 et2) => evc (bits1 ++ bits2) (ss et1 et2)
+  end",2,Definition
+term1,:= att 1 (asp SIG),2,Definition
+P0,: Plc := 0,2,Definition
+P1,: Plc := 1,2,Definition
+P2,: Plc := 2,2,Definition
+P3,: Plc := 3,2,Definition
+P4,: Plc := 4,2,Definition
+attest,"(p:Plc) (targ: TARG_ID) :=
+  asp (ASPC (asp_paramsC attest_id [] p targ))",2,Definition
+appraise,"(p:Plc) (targ: TARG_ID) :=
+  asp (ASPC (asp_paramsC appraise_id [] p targ))",2,Definition
+certificate,"(p:Plc) (targ: TARG_ID) :=
+  asp (ASPC (asp_paramsC cert_id [] p targ))",2,Definition
+store,"(p:Plc) (targ: TARG_ID) :=
+  asp (ASPC (asp_paramsC cache_id store_args p targ))",2,Definition
+retrieve,"(p:Plc) (targ: TARG_ID) :=
+  asp (ASPC (asp_paramsC cache_id retrieve_args p targ))",2,Definition
+cert_style_simple_sig,": Term :=
+  att P1 (lseq
+            (attest P1 sys)
+            (att 2 (lseq
+                      (appraise P2 sys)
+                      (asp SIG))))",2,Definition
+cert_style,": Term :=
+  att P1 (lseq
+           (attest P1 sys)
+           (att 2 (lseq
+                    (appraise P2 sys)
+                    (certificate P2 sys))))",2,Definition
+cert_cache_p1,": Term :=
+  lseq
+    (attest P1 sys)
+    (lseq
+       (att P2
+            (lseq
+               (appraise P2 sys)
+               (certificate P2 sys)))
+       (store P1 cache))",2,Definition
+cert_cache_p0,": Term :=
+  att P1
+      (lseq
+         (bseq (NONE,ALL)
+               (retrieve P1 cache)
+               (asp CPY))
+         (asp SIG))",2,Definition
+bg_check,": Term :=
+  lseq
+    (att P1 (attest P1 sys))
+    (att P2 (appraise P2 sys))",2,Definition
+par_mut_p0,": Term :=
+  lseq
+    (att P1 (attest P1 sys))
+    (att P2 (appraise P2 sys))",2,Definition
+par_mut_p1,": Term :=
+  lseq
+    (att P0 (attest P0 sys))
+    (att P2 (appraise P2 sys))",2,Definition
+layered_bg,"' : Term :=
+  lseq
+    (attest P1 sys)
+    (lseq
+       (attest P3 att_tid)
+       (attest P4 att_tid))",2,Definition
+layered_bg,"'' : Term :=
+  bpar (ALL,ALL)
+       (att P3 (attest P3 sys))
+       (att P4 (attest P4 sys))",2,Definition
+layered_bg_weak,": Term :=
+  att P1
+      (lseq
+         (bpar (ALL,ALL)
+               layered_bg'
+               layered_bg'')
+         (att P2
+              (lseq
+                 (appraise P2 it)
+                 (asp SIG))))",2,Definition
+layered_bg_strong,": Term :=
+    att P1
+      (lseq
+         (bseq (ALL,ALL) (* only change from layered_bg_weak on this line (bpar --> bseq) *)
+               layered_bg'
+               layered_bg'')
+         (att P2
+              (lseq
+                 (appraise P2 it)
+                 (asp SIG))))",2,Definition
+test_par_nested,": Term :=
+  bpar (ALL,ALL)
+       (asp SIG)
+       (bpar (ALL,ALL)
+             (asp SIG)
+             (asp SIG))",2,Definition
+attest_id,: ASP_ID,2,Definition
+appraise_id,: ASP_ID,2,Definition
+cert_id,: ASP_ID,2,Definition
+cache_id,: ASP_ID,2,Definition
+store_id,: ASP_ID,2,Definition
+retrieve_id,: ASP_ID,2,Definition
+store_args,: list Arg,2,Definition
+retrieve_args,: list Arg,2,Definition
+sys,: TARG_ID,2,Definition
+cache,: TARG_ID,2,Definition
+att_tid,: TARG_ID,2,Definition
+it,: TARG_ID,2,Definition
+kim_meas,": Term :=
+  <{ << kim_meas_aspid dest_plc kim_meas_targid >> }>",2,Definition
+create_and_load_ak,": Term :=
+  asp (
+      ASPC ALL KEEP
+           (asp_paramsC
+              cal_ak_aspid cal_ak_args source_plc cal_ak_targid))",2,Definition
+pub_key_to_bc,": Term :=
+  asp (
+      ASPC ALL KEEP
+           (asp_paramsC
+              pub_bc_aspid pub_bc_args source_plc pub_bc_targid))",2,Definition
+get_data,": Term :=
+  <{ << get_data_aspid source_plc get_data_targid >> }>",2,Definition
+tpm_sig,": Term :=
+  <{ << tpm_sig_aspid source_plc tpm_sig_targid >> }>",2,Definition
+ssl_enc,": Term :=
+  asp (
+      ASPC ALL ENCR
+           (asp_paramsC
+              ssl_enc_aspid ssl_enc_args source_plc ssl_enc_targid))",2,Definition
+demo_phrase,": Term :=
+  <{ kim_meas ->
+     create_and_load_ak ->
+     pub_key_to_bc ->
+     get_data ->
+     tpm_sig ->
+     ssl_enc }>",2,Definition
+demo_phrase2,": Term :=
+  <{ @ demo_plc_2 [kim_meas] }>",2,Definition
+demo_phrase3,": Term :=
+  <{ @ demo_plc_2 [kim_meas -> @ demo_plc_1 [kim_meas]] }>",2,Definition
+ssl_sig,": Term :=
+  asp (
+      ASPC ALL EXTD (asp_paramsC ssl_sig_aspid ssl_sig_args dest_plc ssl_sig_targid))",2,Definition
+client_data_phrase,": Term :=
+  asp (
+      ASPC ALL KILL (asp_paramsC store_clientData_aspid store_clientData_args source_plc store_clientData_targid))",2,Definition
+etsize_mt_sig,":=
+  et_size (uu 0 EXTD sig_params mt)",2,Definition
+P0,: Plc := 0,2,Definition
+P1,: Plc := 1,2,Definition
+P2,: Plc := 2,2,Definition
+P3,: Plc := 3,2,Definition
+P4,: Plc := 4,2,Definition
+attest,"(p:Plc) (targ: TARG_ID) :=
+  asp (ASPC (asp_paramsC attest_id [] p targ))",2,Definition
+appraise,"(p:Plc) (targ: TARG_ID) :=
+  asp (ASPC (asp_paramsC appraise_id [] p targ))",2,Definition
+certificate,"(p:Plc) (targ: TARG_ID) :=
+  asp (ASPC (asp_paramsC cert_id [] p targ))",2,Definition
+store,"(p:Plc) (targ: TARG_ID) :=
+  asp (ASPC (asp_paramsC cache_id store_args p targ))",2,Definition
+retrieve,"(p:Plc) (targ: TARG_ID) :=
+  asp (ASPC (asp_paramsC cache_id retrieve_args p targ))",2,Definition
+cert_style_simple_sig,": Term :=
+  att P1 (lseq
+            (attest P1 sys)
+            (att 2 (lseq
+                      (appraise P2 sys)
+                      (asp SIG))))",2,Definition
+term1,:= att 1 (asp SIG),2,Definition
+source_plc,: Plc := O,2,Definition
+target_plc,: Plc := S O,2,Definition
+cal_ak_targid,": ASP_ID := """" % string",2,Definition
+cal_ak_aspid,": ASP_ID := ""cal_ak_id"" % string",2,Definition
+pub_bc_targid,": ASP_ID := """" % string",2,Definition
+pub_bc_aspid,": ASP_ID := ""pub_bc_id"" % string",2,Definition
+get_data_targid,": ASP_ID := """" % string",2,Definition
+get_data_aspid,": ASP_ID := ""get_data_id"" % string",2,Definition
+tpm_sig_targid,": ASP_ID := """" % string",2,Definition
+tpm_sig_aspid,": ASP_ID := ""tpm_sig_id"" % string",2,Definition
+ssl_enc_targid,": ASP_ID := """" % string",2,Definition
+ssl_enc_aspid,": ASP_ID := ""ssl_enc_id"" % string",2,Definition
+my_extracted,"(t:Term) (st:cvm_st) (et:Evidence) (ls:RawEv) :=
+  let res := run_cvm' t st in
+  let res' := build_app_comp_evC et ls in
+  let res'' := eval t 0 mt in
+  (res, res', res'')",2,Definition
+my_extracted,"(t:Term) (st:cvm_st) (et:Evidence) (ls:RawEv) :=
+  let res := run_cvm' t st in
+  let res' := build_app_comp_evC et ls in
+  let res'' := eval t 0 mt in
+  (res, res', res'')",2,Definition
+encodeEvRaw,(e:RawEv): BS,2,Definition
+do_asp,(params :ASP_PARAMS) (e:RawEv) (mpl:Plc) (x:Event_ID) : BS,2,Definition
+doRemote_session,(t:Term) (pTo:Plc) (e:EvC) : EvC,2,Definition
+parallel_vm_thread,(l:Loc) (t:Core_Term) (p:Plc) (e:EvC) : EvC,2,Definition
+am_sendReq,(t:Term) (pFrom:Plc) (pTo:Plc) (authTok:ReqAuthTok) (e:RawEv) : RawEv,2,Definition
+do_asp,"' (params :ASP_PARAMS) (e:RawEv) (mpl:Plc) (x:Event_ID) : IO BS :=
+  ret (do_asp params e mpl x)",2,Definition
+doRemote_session,"' (t:Term) (pTo:Plc) (e:EvC) : IO EvC :=
+  ret (doRemote_session t pTo e)",2,Definition
+do_start_par_thread,"(loc:Loc) (t:Core_Term) (e:RawEv) : IO unit :=
+  ret tt",2,Definition
+do_wait_par_thread,"(loc:Loc) (t:Core_Term) (p:Plc) (e:EvC) : IO EvC :=
+  ret (parallel_vm_thread loc t p e)",2,Definition
+requester_bound,(t:Term) (fromPl:Plc) (authTok:ReqAuthTok) : bool,2,Definition
+appraise_auth_tok,(res:AppResultC) : bool,2,Definition
+IO,:= CVM,2,Definition
+peel_bs_am,"(ls:RawEv) : AM (BS * RawEv) :=
+  match ls with
+  | bs :: ls' => ret (bs, ls')
+  | _ => failm
+  end",2,Definition
+fromSome,"{A:Type} (default:A) (opt:option A): A :=
+  match opt with
+  | Some x => x
+  | _ => default
+  end",2,Definition
+gen_appraise_am_comp,"(t:Term) (p:Plc) (et:Evidence) (ls:RawEv) : AM AppResultC :=
+  gen_appraise_AM (eval t p et) ls",2,Definition
+run_am_app_comp,"{A:Type} (am_comp:AM A) (default_A:A) : A :=
+  let optRes := evalSt am_comp empty_amst in (* TODO:  use input nonce mapping here? *)
+  fromSome default_A optRes",2,Definition
+run_gen_appraise_am,"(t:Term) (p:Plc) (et:Evidence) (ls:RawEv) : AppResultC := 
+  let am_appr_comp := gen_appraise_AM (eval t p et) ls in
+  (run_am_app_comp am_appr_comp mtc_app)",2,Definition
+am_sendReq_nonce,"(t:Term) (pFrom:Plc) (pTo:Plc) : AM AppResultC :=
+  let nonce_bits := gen_nonce_bits in
+  nid <- am_newNonce nonce_bits ;;
+  let resev := am_sendReq t pFrom pTo (evc [] mt) [nonce_bits] in
+  let expected_et := eval t pTo (nn nid) in
+  gen_appraise_AM expected_et resev",2,Definition
+am_sendReq_nonce_auth,"(t:Term) (pFrom:Plc) (pTo:Plc) : AM AppResultC :=
+  let nonce_bits := gen_nonce_bits in
+  nid <- am_newNonce nonce_bits ;;
+  let auth_phrase := (* kim_meas *) ssl_sig in
+  let auth_rawev := run_cvm_rawEv auth_phrase pFrom [] in
+  let auth_et := eval auth_phrase pFrom mt in
+  let resev := am_sendReq t pFrom pTo (evc auth_rawev auth_et) [nonce_bits]  in
+  let expected_et := eval t pTo (nn nid) in
+  gen_appraise_AM expected_et resev",2,Definition
+am_sendReq_auth,"(t:Term) (pFrom:Plc) (pTo:Plc) (initEv:RawEv) : AM RawEv :=
+  let auth_phrase := (* kim_meas *) ssl_sig in
+  let auth_rawev := run_cvm_rawEv auth_phrase pFrom [] in
+  let et := eval auth_phrase pFrom mt in
+  let resev := am_sendReq t pFrom pTo (evc auth_rawev et) initEv in
+  ret resev",2,Definition
+run_am_sendReq_nonce_auth,"(t:Term) (pFrom:Plc) (pTo:Plc) : AppResultC :=
+  let am_comp := am_sendReq_nonce_auth t pFrom pTo in
+  (run_am_app_comp am_comp mtc_app)",2,Definition
+am_check_auth_tok,"(t:Term) (fromPl:Plc) (authTok:ReqAuthTok) : AM AppResultC :=
+  match authTok with
+  | evc auth_ev auth_et => 
+    appres <-
+    (match (requester_bound t fromPl authTok) with
+     | false => failm
+     | true => gen_appraise_AM auth_et auth_ev
+     end) ;;
+    ret appres
+  end",2,Definition
+am_serve_auth_tok_req,"(t:Term) (fromPl:Plc) (myPl:Plc) (authTok:ReqAuthTok) (init_ev:RawEv): AM RawEv :=
+  match authTok with
+  | evc auth_ev auth_et => 
+    v <- am_check_auth_tok t fromPl authTok ;;
+    match (andb (requester_bound t fromPl authTok) (appraise_auth_tok v)) with
+    | true =>
+      match (privPolicy fromPl t) with
+      | true => ret (run_cvm_rawEv t myPl init_ev)
+      | false => failm
+      end
+        
+    | false => failm
+    end
+  end",2,Definition
+run_am_serve_auth_tok_req,"(t:Term) (fromPl:Plc) (myPl:Plc) (authTok:ReqAuthTok) (init_ev:RawEv) : RawEv :=
+  run_am_app_comp (am_serve_auth_tok_req t fromPl myPl authTok init_ev) []",2,Definition
+checkASP,(i:ASP_ID) (args:list Arg) (tpl:Plc) (tid:Plc) (bs:BS) : BS,2,Definition
+checkSig,(ls:EvBits) (p:Plc) (sig:BS) : BS,2,Definition
+checkHash,(e:Evidence) (p:Plc) (hash:BS) : BS,2,Definition
+peel_bs,"(ls:EvBits) : option (BS * EvBits) :=
+  match ls with
+  | bs :: ls' => Some (bs, ls')
+  | _ => None
+  end",2,Definition
+checkASP_fwd,"(p:Plc) (f:FWD) (params:ASP_PARAMS)
+           (et:Evidence) (bs:BS) (ls:RawEv) : Opt EvidenceC :=
+  match f with
+  | COMP => res <- checkHH params bs ;;
+           ret (hhc p params res et)
+  | ENCR => res <- checkEE params bs ;;
+           ret (eec p params res et)
+  | _ => res <- checkASP params bs ;;
+        
+        ret (ggc p params bs mtc)
+  end",2,Definition
+run_gen_appraise,"(t:Term) (p:Plc) (et:Evidence) (nonceGolden:BS) (ls:RawEv) :=
+  fromSome mtc_app (build_app_comp_evC (eval t p et) ls nonceGolden)",2,Definition
+run_gen_appraise_w_nonce,"(t:Term) (p:Plc) (nonceIn:BS) (ls:RawEv) :=
+  run_gen_appraise t p (nn 0) nonceIn ls",2,Definition
+am_add_trace,"(tr':list Ev) : AM_St -> AM_St :=
+  fun '{| am_nonceMap := nm;
+        am_nonceId := ni;
+        st_aspmap := amap;
+        st_sigmap := smap;
+        st_hshmap := hmap;
+        am_st_trace := tr;
+        checked := cs |} =>
+    mkAM_St nm ni amap smap hmap (tr ++ tr') cs",2,Definition
+am_add_tracem,"(tr:list Ev) : AM unit :=
+  modify (am_add_trace tr)",2,Definition
+am_run_cvm,"(annt:AnnoTerm) (e:EvidenceC) (et:Evidence) : AM EvidenceC :=
+  let start_st := (mk_st e et [] 0) in
+  let end_st := (run_cvm annt start_st) in
+  am_add_tracem (st_trace end_st) ;;
+  ret (st_ev end_st)",2,Definition
+am_run_cvm_comp,"{A:Type} (comp:CVM A) : AM A :=
+  let '(cvm_res, vmst') := (runSt comp empty_vmst) in
+  match cvm_res with
+  | Some v =>
+    am_add_tracem (st_trace vmst') ;;
+    ret v
+  | _ => failm
+  end",2,Definition
+am_get_hsh_gv,"(p:Plc) (i:ASP_ID) : AM BS :=
+  m <- gets st_hshmap ;;
+  let maybeId := map_get m (p,i) in
+  match maybeId with
+  | Some i' => ret i'
+  | None => failm
+  end",2,Definition
+am_get_hsh_golden_val,"(p:Plc) (et:Evidence): AM BS :=
+  (*
+    m <- gets st_aspmap ;;
+    let maybeId := map_get m (p,i) in
+    match maybeId with
+    | Some i' => ret i'
+    | None => failm
+    end",2,Definition
+am_check_hsh_eq,"(gv:BS) (actual:BS) : AM BS :=
+  ret 1",2,Definition
+am_add_trace,"(tr':list Ev) : AM_St -> AM_St :=
+  fun '{| am_nonceMap := nm;
+        am_nonceId := ni;
+        st_aspmap := amap;
+        st_sigmap := smap;
+        st_hshmap := hmap;
+        am_st_trace := tr;
+        checked := cs |} =>
+    mkAM_St nm ni amap smap hmap (tr ++ tr') cs",2,Definition
+am_add_tracem,"(tr:list Ev) : AM unit :=
+  modify (am_add_trace tr)",2,Definition
+am_run_cvm,"(annt:AnnoTerm) (e:EvidenceC) (et:Evidence) : AM EvidenceC :=
+  let start_st := (mk_st e et [] 0) in
+  let end_st := (run_cvm annt start_st) in
+  am_add_tracem (st_trace end_st) ;;
+  ret (st_ev end_st)",2,Definition
+am_run_cvm_comp,"{A:Type} (comp:CVM A) : AM A :=
+  let '(cvm_res, vmst') := (runSt comp empty_vmst) in
+  match cvm_res with
+  | Some v =>
+    am_add_tracem (st_trace vmst') ;;
+    ret v
+  | _ => failm
+  end",2,Definition
+am_get_hsh_gv,"(p:Plc) (i:ASP_ID) : AM BS :=
+  m <- gets st_hshmap ;;
+  let maybeId := map_get m (p,i) in
+  match maybeId with
+  | Some i' => ret i'
+  | None => failm
+  end",2,Definition
+am_get_hsh_golden_val,"(p:Plc) (et:Evidence): AM BS :=
+  (*
+    m <- gets st_aspmap ;;
+    let maybeId := map_get m (p,i) in
+    match maybeId with
+    | Some i' => ret i'
+    | None => failm
+    end",2,Definition
+am_check_hsh_eq,"(gv:BS) (actual:BS) : AM BS :=
+  ret 1",2,Definition
+halt,"st :=
+  match st with
+  | stop _ _ => True
+  | _ => False
+  end",2,Definition
+Environment,: Type :=  Plc -> (option Manifest),2,Definition
+e_empty,: Environment := (fun _ => None),2,Definition
+e_update,"(m : Environment) (x : Plc) (v : (option Manifest)) :=
+    fun x' => if plc_dec x x' then v else m x'",2,Definition
+e0,:= e_empty,2,Definition
+e1,":=
+    e_update e0 Rely (Some {| asps := [aspc1]; M:= [Target] |})",2,Definition
+e2,":=
+    e_update e1 Target (Some {| asps := [SIG;  aspc2]; M:= [Appraise] |})",2,Definition
+e3,":=
+    e_update e2 Appraise (Some {| asps := [HSH] ; M:= [] |})",2,Definition
+example_sys_1,:= env e3,2,Definition
+MapC,(A:Type) (B:Type) `{H : EqClass A} := list (A * B),2,Definition
+map_empty,{A B:Type} `{H : EqClass A} : MapC A B := [],2,Definition
+map_set,"{A B:Type} `{H : EqClass A} (m:MapC A B) (x:A) (v:B) : MapC A B := (x, v) :: m",2,Definition
+MapD,(A:Type) (B:Type) `{H : EqClass A} `{H1 : EqClass B} := list (A * B),2,Definition
+mapD_empty,{A B:Type} `{H : EqClass A} `{H1 : EqClass B} : MapD A B := [],2,Definition
+mapD_set,"{A B:Type} `{H : EqClass A} `{H1 : EqClass B} 
+                    (m:MapD A B) (x:A) (v:B) : MapD A B := (x, v) :: m",2,Definition
+disjoint_lists,"(l l': list A): Prop :=
+    forall x, In x l -> In x l' -> False",2,Definition
+earlier,"(l: list A) (x y: A) :=
+    exists n,
+      In x (firstn n l) /\
+      In y (skipn n l)",2,Definition
+ret,{A : Type} (a : A) : Opt A := (Some a),2,Definition
+bind,"{A B : Type} (m : Opt A) (f : A -> Opt B) : Opt B :=
+    match m with
+    | Some v => f v
+    | _ => None
+    end",2,Definition
+failm,{A : Type} : Opt A := None,2,Definition
+runOpt,"{A} (h : Opt A) (default: A) : A :=
+  match h with
+    Some v => v
+  | _ => default
+  end",2,Definition
+nop,:= ret tt,2,Definition
+when,"{A} (b : bool) (m : Opt A) : Opt unit :=
+  if b then m ;; ret tt else nop",2,Definition
+fromSome,"{A:Type} (default:A) (opt:Opt A): A :=
+  match opt with
+  | Some x => x
+  | _ => default
+  end",2,Definition
+sig_params,: ASP_PARAMS,2,Definition
+hsh_params,: ASP_PARAMS,2,Definition
+enc_params,: Plc -> ASP_PARAMS,2,Definition
+St,(S A : Type) : Type := S -> (option A) * S % type,2,Definition
+ret,"{S A : Type} (a : A) : St S A := fun s => (Some a, s)",2,Definition
+bind,"{S A B : Type} (m : St S A) (f : A -> St S B) : St S B :=
+  fun s =>
+    let '(a, s') := m s in
+    match a with
+    | Some v =>
+      let '(b, s'') := f v s' in
+      (b, s'')
+    | _ => (None,s')
+    end",2,Definition
+failm,"{S A : Type} : St S A := fun s => (None, s)",2,Definition
+modify,"{S} (f : S -> S) : St S unit := fun s => (Some tt, f s)",2,Definition
+put,"{S} (s : S) : St S unit := fun _ => (Some tt, s)",2,Definition
+get,"{S} : St S S := fun s => (Some s, s)",2,Definition
+runSt,"{S A} (h : St S A) (s : S)  : (option A) * S % type :=
+  h s",2,Definition
+evalSt,"{S A} (h : St S A) (s : S) : option A :=
+ fst (runSt h s)",2,Definition
+execSt,"{S A} (h : St S A) (s : S) : S :=
+  snd ((*runSt*) h s)",2,Definition
+nop,{S : Type} := @ret S _ tt,2,Definition
+gets,"{S} {A} (f:S -> A) : St S A :=
+  st <- get ;;
+  ret (f st)",2,Definition
+when,"{S A} (b : bool) (m : St S A) : St S unit :=
+  if b then m ;; ret tt else nop",2,Definition
+asp_term_to_core,"(a:ASP) : Core_Term :=
+  match a with
+  | NULL => aspc NULLC
+  | CPY => aspc CPYC
+  | ASPC sp fwd params =>
+    match sp with
+    | NONE => lseqc (aspc CLEAR) (aspc (ASPCC fwd params))
+    | ALL => (aspc (ASPCC fwd params))
+    end                
+  | SIG => aspc (ASPCC EXTD sig_params)
+  | HSH => aspc (ASPCC COMP hsh_params)
+  | ENC q => aspc (ASPCC ENCR (enc_params q))
+  end",2,Definition
+RawEv,:= list BS,2,Definition
+mt_evc,: EvC := (evc [] mt),2,Definition
+get_et,"(e:EvC) : Evidence :=
+  match e with
+  | evc ec et => et
+  end",2,Definition
+get_bits,"(e:EvC): list BS :=
+  match e with
+  | evc ls _ => ls
+  end",2,Definition
+ReqAuthTok,:= EvC,2,Definition
+splitEv_T_l,"(sp:Split) (e:Evidence) : Evidence :=
+  match sp with
+  | (ALL,_) => e
+  |  _ => mt
+  end",2,Definition
+splitEv_T_r,"(sp:Split) (e:Evidence) : Evidence :=
+  match sp with
+  | (_,ALL) => e
+  |  _ => mt
+  end",2,Definition
+sp_ev,"(sp:SP) (e:Evidence) : Evidence :=
+  match sp with
+  | ALL => e
+  | NONE => mt
+  end",2,Definition
+eval_asp,"t p e :=
+  match t with
+  | NULL => mt
+  | CPY => e 
+  | ASPC sp fwd params =>
+    match fwd with
+    | KEEP => (sp_ev sp e)
+    | KILL => mt
+    | _ => uu p fwd params (sp_ev sp e)
+    end
+  | SIG => uu p EXTD sig_params e
+  | HSH => uu p COMP hsh_params e
+  | ENC q => uu p ENCR (enc_params q) e
+  end",2,Definition
+ev,"x : nat :=
+  match x with
+  | null i _ => i
+  | copy i _ => i
+  | umeas i _ _ _ => i
+  | req i _ _ _ _ => i
+  | rpy i _ _ _ => i 
+  | split i _ => i
+  | join i _ => i
+  | cvm_thread_start _ _ _ _ => 42
+  | cvm_thread_end _ => 43
+  end",2,Definition
+asp_event,"i x p e :=
+  match x with
+  | NULL => null i p
+  | CPY => copy i p
+  | ASPC sp _ ps => umeas i p ps (sp_ev sp e)
+  | SIG => umeas i p sig_params e
+  | HSH => umeas i p hsh_params e
+  | ENC q => umeas i p (enc_params q) e
+  end",2,Definition
+Plc,: Set := ID_Type,2,Definition
+N_ID,: Set := nat,2,Definition
+Event_ID,: Set := nat,2,Definition
+ASP_ID,: Set := ID_Type,2,Definition
+TARG_ID,: Set := ID_Type,2,Definition
+Arg,: Set := ID_Type,2,Definition
+Split,: Set := (SP * SP),2,Definition
+test1,:= <{ __ -> {} }>,2,Definition
+test_enc,:= <{ __ -> * min_id_type}>,2,Definition
+Loc,: Set := nat,2,Definition
+Locs,: Set := list Loc,2,Definition
+test2,:= <<core>{ __ -> {} }>,2,Definition
+out_ev,"v :=
+  match v with
+  | copy _ _ e => e
+  | kmeas _ _ _ _ e => e
+  | umeas _ _ _ _ e => e
+  | sign _ _ _ e => e
+  | hash _ _ _ e => e
+  | req _ _ _ e => e
+  | rpy _ _ _ e => e
+  | split _ _ _ _ e => e
+  | join _ _ _ _ e => e
+  end",2,Definition
+get_data,"' : Term :=
+  asp (
+  ASPC ALL EXTD (asp_paramsC get_data_aspid get_data_args source_plc get_data_targid))",2,Definition

@@ -1,0 +1,110 @@
+[
+    {
+        "role": "system",
+        "content": "\nYou are a proof assistant of coq theorem prover, an automated service to build proofs for lemmas in a coq file. You first ask the user for the context such as definitions, or useful lemmas, hints, or modifiers You collect all context Remember to use a previously proved lemma in the conversation to prove a new lemma in the conversation if applicable. \nYou respond in the following style lemma lemma-name: lemma-body.\n Proof. step_1\n, ...step_n\n. Qed.\n unless directedto close the proof with the key word defined."
+    },
+    {
+        "role": "user",
+        "content": "given this context \"\" Require Import Bool Classical FunctionalExtensionality List.\n\nSet Implicit Arguments.\n\n\nAxiom prop_ext : forall P Q : Prop,\n  (P <-> Q) -> P = Q.\n\nSection set.\n  Variable A : Type.\n\n  Definition set := A -> Prop.\n  Definition In (x : A) (s : set) := s x.\n\n  Definition constant (ls : list A) : set := fun x => List.In x ls.\n  Definition universe : set := fun _ => True.\n  Definition check (P : Prop) : set := fun _ => P.\n\n  Definition union (s1 s2 : set) : set := fun x => s1 x \\/ s2 x.\n  Definition intersection (s1 s2 : set) : set := fun x => s1 x /\\ s2 x.\n  Definition minus (s1 s2 : set) : set := fun x => s1 x /\\ ~s2 x.\n  Definition complement (s : set) : set := fun x => ~s x.\n\n  Definition subseteq (s1 s2 : set) := forall x, s1 x -> s2 x.\n  Definition subset (s1 s2 : set) := subseteq s1 s2 /\\ ~subseteq s2 s1.\n\n  Definition scomp (P : A -> Prop) : set := P. \"\" \nProve that \"\"\" \n  Theorem sets_equal : forall s1 s2 : set, (forall x, s1 x <-> s2 x) -> s1 = s2.\"\"\""
+    },
+    {
+        "role": "assistant",
+        "content": "Proof.\n  intros s1 s2 H.\n  apply functional_extensionality; intro x.\n  apply prop_ext.\n  apply H.\nQed."
+    },
+    {
+        "role": "user",
+        "content": "ok, let add this context \"\"\"  End set.\n\nInfix \"\\in\" := In (at level 70).\n(*Notation \"[ P ]\" := (check P).*)\nInfix \"\\cup\" := union (at level 40).\nInfix \"\\cap\" := intersection (at level 40).\nInfix \"\\setminus\" := minus (at level 40).\nInfix \"\\subseteq\" := subseteq (at level 70).\nInfix \"\\subset\" := subset (at level 70).\nNotation \"[ x | P ]\" := (scomp (fun x => P)).\n\nModule Type EMPTY.\nEnd EMPTY.\nModule SetNotations(M : EMPTY).\n  Notation \"{ }\" := (constant nil).\n  Notation \"{ x1 , .. , xN }\" := (constant (cons x1 (.. (cons xN nil) ..))).\nEnd SetNotations.\n\n\nLtac sets' tac :=\n  unfold In, constant, universe, check, union, intersection, minus, complement, subseteq, subset, scomp in *;\n    tauto || intuition tac.\n\nLtac sets tac :=\n  try match goal with\n        | [ |- @eq (set _) _ _ ] => apply sets_equal; intro; split\n      end; sets' tac.\n\n\n(** * Some of the usual properties of set operations *)\n\nSection properties.\n  Variable A : Type.\n  Variable x : A.\n  Variables s1 s2 s3 : set A.\"\"\"\" let prove this theorem too \"\"\" Theorem union_comm : s1 \\cup s2 = s2 \\cup s1.\"\"\""
+    },
+    {
+        "role": "assistant",
+        "content": "Proof.\n  sets reflexivity.\nQed."
+    },
+    {
+        "role": "user",
+        "content": "great! let prove this theroem now \"\"\" Theorem union_assoc : (s1 \\cup s2) \\cup s3 = s1 \\cup (s2 \\cup s3).\"\"\""
+    },
+    {
+        "role": "assistant",
+        "content": "Proof.\n  sets reflexivity.\nQed."
+    },
+    {
+        "role": "user",
+        "content": "excellent! now, let prove this \"\"\" Theorem intersection_comm : s1 \\cap s2 = s2 \\cap s1.\"\"\""
+    },
+    {
+        "role": "assistant",
+        "content": "Proof.\n  sets reflexivity.\nQed."
+    },
+    {
+        "role": "user",
+        "content": "ok let try to prove the following theorems \"\"  Theorem intersection_assoc : (s1 \\cap s2) \\cap s3 = s1 \\cap (s2 \\cap s3).\n\n\n  Theorem not_union : complement (s1 \\cup s2) = complement s1 \\cap complement s2.\n  \n\n  Theorem not_intersection : complement (s1 \\cap s2) = complement s1 \\cup complement s2.\"\"\""
+    },
+    {
+        "role": "assistant",
+        "content": "Proof.\n  sets reflexivity.\nQed.\n\nProof.\n  sets reflexivity.\nQed.\n\nProof.\n  sets reflexivity.\nQed."
+    },
+    {
+        "role": "user",
+        "content": "ok! great! now let us try to prove this theorem \"\"\" Theorem subseteq_refl : s1 \\subseteq s1. \"\"\""
+    },
+    {
+        "role": "assistant",
+        "content": "Proof.\n  unfold subseteq; intros.\n  assumption.\nQed."
+    },
+    {
+        "role": "user",
+        "content": "now prove that \"\"Theorem subseteq_In : s1 \\subseteq s2 -> x \\in s1 -> x \\in s2. \"\""
+    },
+    {
+        "role": "assistant",
+        "content": "Proof.\n  unfold subseteq, In; auto.\nQed."
+    },
+    {
+        "role": "user",
+        "content": "now prove that \"\"\" Theorem cap_split : forall (P1 P2 : A -> Prop),\n    (forall s, P1 s \\/ P2 s)\n    -> s1 \\cap [s | P1 s] \\subseteq s2\n    -> s1 \\cap [s | P2 s] \\subseteq s3\n    -> s1 \\subseteq (s2 \\cap [s | P1 s]) \\cup (s3 \\cap [s | P2 s]).\"\"\""
+    },
+    {
+        "role": "assistant",
+        "content": "Proof.\n  unfold subseteq, In, intersection, union, scomp; intros.\n  destruct (H x); intuition.\nQed."
+    },
+    {
+        "role": "user",
+        "content": "Thanks, but I had the subgoals \"\"\" 2 goals\nA : Type\nx : A\ns1, s2, s3 : set A\nP1, P2 : A -> Prop\nH : forall s : A, P1 s \\/ P2 s\nH0 : forall x : A, s1 x /\\ P1 x -> s2 x\nH1 : forall x : A, s1 x /\\ P2 x -> s3 x\nx0 : A\nH2 : s1 x0\nH3 : P1 x\n______________________________________(1/2)\ns2 x0 /\\ P1 x0 \\/ s3 x0 /\\ P2 x0\n______________________________________(2/2)\ns2 x0 /\\ P1 x0 \\/ s3 x0 /\\ P2 x0\"\"\" can you fix the prove such that these subgoals are discharged too. "
+    },
+    {
+        "role": "assistant",
+        "content": "Proof.\n  unfold subseteq, In, intersection, union, scomp; intros.\n  destruct (H x); [left|right]; split; auto; [apply H0|apply H1]; split; auto.\nQed."
+    },
+    {
+        "role": "user",
+        "content": "I had the error \"\"  In environment\nA : Type\nx : A\ns1, s2, s3 : set A\nP1, P2 : A -> Prop\nH : forall s : A, P1 s \\/ P2 s\nH0 : forall x : A, s1 x /\\ P1 x -> s2 x\nH1 : forall x : A, s1 x /\\ P2 x -> s3 x\nx0 : A\nH2 : s1 x0\nH3 : P1 x\nUnable to unify \"s3 ?M1059\" with \"P1 x0\".\"\"\" and i still have the subgoals \"\"\" 1 goal\nA : Type\nx : A\ns1, s2, s3 : set A\nP1, P2 : A -> Prop\nH : forall s : A, P1 s \\/ P2 s\nH0 : forall x : A, s1 x /\\ P1 x -> s2 x\nH1 : forall x : A, s1 x /\\ P2 x -> s3 x\nx0 : A\nH2 : s1 x0\n______________________________________(1/1)\ns2 x0 /\\ P1 x0 \\/ s3 x0 /\\ P2 x0\"\"\" "
+    },
+    {
+        "role": "assistant",
+        "content": "I apologize for the confusion. You're right. I made a mistake. Let me correct the proof.\n\nProof.\n  unfold subseteq, In, intersection, union, scomp; intros.\n  destruct (H x0); [left|right]; split; auto; [apply H0|apply H1]; split; auto.\nQed."
+    },
+    {
+        "role": "user",
+        "content": "explain every step in the ;ast proof. \"\"\" unfold subseteq, In, intersection, union, scomp; intros.\n  destruct (H x0); [left|right]; split; auto; [apply H0|apply H1]; split; auto \"\"\""
+    },
+    {
+        "role": "assistant",
+        "content": "I apologize for the confusion earlier. Here's the explanation of each step in the proof:\n\n1. `unfold subseteq, In, intersection, union, scomp; intros.`: This step unfolds the definitions of subseteq, In, intersection, union, and scomp to their basic definitions. This makes it easier to manipulate the terms in the lemma. The `intros` command introduces all universally quantified variables and assumptions into the context.\n\n2. `destruct (H x0);`: The `destruct` command is applied to the result of the function `H` applied to `x0`, which is a proof of `P1 x0 \\/ P2 x0`. This splits the proof into two cases, one where `P1 x0` holds and one where `P2 x0` holds.\n\n3. `[left|right]; split; auto;`: In each of the two cases from the previous step, we must prove a disjunction (`s2 x0 /\\ P1 x0 \\/ s3 x0 /\\ P2 x0`). The `[left|right]` tactic chooses the left disjunct in the first case and the right disjunct in the second case. The `split; auto;` tactic then splits the goal into two subgoals, one for each conjunct of the conjunctions `s2 x0 /\\ P1 x0` and `s3 x0 /\\ P2 x0`, and tries to solve each of these subgoals automatically.\n\n4. `[apply H0|apply H1]; split; auto.`: In the first case, we apply the hypothesis `H0` to prove `s2 x0`, and in the second case, we apply the hypothesis `H1` to prove `s3 x0`. Then we use `split; auto` again to solve the remaining goals `P1 x0` and `P2 x0`.\n\nOverall, this proof is showing that if `s1` is a subset of `s2` when intersected with `P1` and `s3` when intersected with `P2`, then `s1` is a subset of the union of `s2` intersected with `P1` and `s3` intersected with `P2`."
+    },
+    {
+        "role": "user",
+        "content": "thanks, can explain every tactic in the following line, what does \",\" and \";\" do in it \"\"\" unfold subseteq, In, intersection, union, scomp; intros.\"\"\""
+    },
+    {
+        "role": "assistant",
+        "content": "Sure, I'd be happy to explain what each part of the line `unfold subseteq, In, intersection, union, scomp; intros.` does.\n\n1. `unfold subseteq, In, intersection, union, scomp;`: The `unfold` tactic in Coq is used to replace a defined term with its definition. In this case, `unfold subseteq, In, intersection, union, scomp;` is replacing each of `subseteq`, `In`, `intersection`, `union`, and `scomp` with their respective definitions. The comma (`,`) is used to separate multiple arguments for a single tactic. So `unfold subseteq, In, intersection, union, scomp;` is unfolding all of these terms in one step.\n\n2. `; intros.`: The semicolon (`;`) is used in Coq to chain tactics together. The tactic after the semicolon (`intros` in this case) will be applied to all subgoals generated by the tactic before the semicolon. In this case, after unfolding the definitions, the `intros` tactic is applied. The `intros` tactic moves all universally quantified variables and hypotheses from the goal to the context, effectively \"introducing\" them as things we can refer to in our proof. So `; intros.` is moving all the variables and hypotheses into the context.\n\nSo, putting it all together, `unfold subseteq, In, intersection, union, scomp; intros.` is unfolding the definitions of `subseteq`, `In`, `intersection`, `union`, and `scomp`, and then introducing all variables and hypotheses into the context."
+    },
+    {
+        "role": "user",
+        "content": "FRAP book examples"
+    },
+    {
+        "role": "assistant",
+        "content": "I'm sorry for the confusion, but as a proof assistant, I don't have the capability to provide examples from the FRAP (Formal Reasoning About Programs) book. However, I can certainly assist you with understanding or creating Coq proofs and theorems. If you have a certain concept or example from the FRAP book that you're interested in, feel free to provide more details and I'll do my best to assist you."
+    }
+]

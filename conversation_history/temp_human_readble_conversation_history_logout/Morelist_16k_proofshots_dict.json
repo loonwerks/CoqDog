@@ -1,0 +1,137 @@
+[
+    {
+        "lemma-name": "firstn_append",
+        "proof-shots": [
+            "induction l; intros l'.\n- simpl. reflexivity.\n- simpl. rewrite IHl. reflexivity.",
+            "induction n as [|k iHk]; intros l1 l2. - now simpl. - destruct l1 as [|x xs]. * unfold skipn at 2, length. repeat rewrite app_nil_l. rewrite <- Minus.minus_n_O. auto. * rewrite <- app_comm_cons. simpl. apply iHk.",
+            "induction n as [|k iHk]; intros l1 l2. - now simpl. - destruct l1 as [|x xs]. * unfold skipn at 2, length. repeat rewrite app_nil_l. rewrite <- Minus.minus_n_O. auto. * rewrite <- app_comm_cons. simpl. apply iHk."
+        ]
+    },
+    {
+        "lemma-name": "skipn_append",
+        "proof-shots": [
+            "induction l; intros l'.\n- simpl. reflexivity.\n- simpl. apply IHl.",
+            "induction l; intros; simpl; auto. rewrite IHl; auto."
+        ]
+    },
+    {
+        "lemma-name": "skipn_all",
+        "proof-shots": [
+            "induction l.\n- simpl. reflexivity.\n- simpl. apply IHl.",
+            "induction l; intros; simpl; auto."
+        ]
+    },
+    {
+        "lemma-name": "skipn_nil",
+        "proof-shots": [
+            "induction i.\n- simpl. reflexivity.\n- simpl. apply IHi.",
+            "induction i.\n- simpl. reflexivity.\n- simpl. reflexivity.",
+            "induction l; intros; simpl; auto."
+        ]
+    },
+    {
+        "lemma-name": "firstn_all_n",
+        "proof-shots": [
+            "induction l; intros n Hlen.\n- simpl. reflexivity.\n- destruct n.\n+ inversion Hlen.\n+ simpl. rewrite IHl.\n* reflexivity.\n* simpl in Hlen. apply le_S_n. assumption.",
+            "induction l as [| a l IH]; intros n H.\n- simpl. apply firstn_nil.\n- destruct n.\n+ inversion H.\n+ simpl. f_equal. apply IH. simpl in H. apply le_S_n in H. exact H."
+        ]
+    },
+    {
+        "lemma-name": "skipn_all_n",
+        "proof-shots": [
+            "induction l as [| a l IH]; intros n H.\n- simpl. apply skipn_nil.\n- destruct n.\n+ inversion H.\n+ simpl. apply IH. simpl in H. apply le_S_n in H. exact H."
+        ]
+    },
+    {
+        "lemma-name": "firstn_in",
+        "proof-shots": [
+            "induction i; intros l H.\n- simpl in H. contradiction.\n- destruct l.\n+ simpl in H. contradiction.\n+ simpl in H. simpl. destruct H.\n* left. assumption.\n* right. apply IHi. assumption."
+        ]
+    },
+    {
+        "lemma-name": "skipn_in",
+        "proof-shots": [
+            "induction i; intros l H.\n- simpl in H. assumption.\n- destruct l.\n+ simpl in H. contradiction.\n+ simpl in H. right. apply IHi. assumption."
+        ]
+    },
+    {
+        "lemma-name": "skipn_zero",
+        "proof-shots": [
+            "intros l. simpl. reflexivity."
+        ]
+    },
+    {
+        "lemma-name": "in_skipn_cons",
+        "proof-shots": [
+            "induction i; intros x y l H.\n- simpl. right. assumption.\n- simpl. apply IHi. assumption.",
+            "intros i x y l H.\ndestruct i.\n- simpl. right. assumption.\n- simpl. apply H.",
+            "intros i x y l H.\ndestruct i.\n- simpl. rewrite skipn_zero in H. right. assumption.\n- simpl. apply H.",
+            "intros i x y l H.\ndestruct i.\n- simpl in *. right. assumption.\n- simpl in *. destruct l.\n+ simpl in *. assumption.\n+ simpl in *. assumption.",
+            "induction i; intros x y l H.\n- simpl in H. apply skipn_zero in H. right. assumption.\n- destruct l.\n+ simpl in *. assumption.\n+ simpl in *. right. apply IHi. assumption.",
+            "induction i; intros; simpl.\n- rewrite skipn_zero in H. right. assumption.\n- destruct l.\n+ simpl in *. tauto.\n+ simpl in *. auto."
+        ]
+    },
+    {
+        "lemma-name": "nodup_append",
+        "proof-shots": [
+            "induction l; intros l' Hnodup_l Hnodup_l' Hdisjoint.\n- simpl. assumption.\n- simpl. apply NoDup_cons.\n+ intro H. apply in_app_or in H. destruct H.\n* inversion Hnodup_l. contradiction.\n* apply Hdisjoint with (x:=a); simpl; auto.\n+ apply IHl.\n* inversion Hnodup_l. assumption.\n* assumption.\n* intros x Hx_in_l Hx_in_l'. apply Hdisjoint with (x:=x); simpl; auto."
+        ]
+    },
+    {
+        "lemma-name": "in_cons_app_cons",
+        "proof-shots": [
+            "intros x y z l. split; intros H.\n- apply in_app_or in H. simpl in H. destruct H.\n+ destruct H.\n* left. symmetry. assumption.\n* right. left. assumption.\n+ destruct H.\n* right. right. symmetry. assumption.\n* contradiction.\n- simpl in H. apply in_or_app. destruct H.\n+ left. simpl. left. symmetry. assumption.\n+ destruct H.\n* left. simpl. right. assumption.\n* right. simpl. left. symmetry. assumption.",
+            "intros x y z l. split; intros H.\n- rewrite app_comm_cons in H. apply in_app_iff in H. simpl in H. destruct H.\n+ destruct H.\n* left. symmetry. assumption.\n* right. left. assumption.\n+ destruct H.\n* right. right. symmetry. assumption.\n* contradiction.\n- destruct H.\n+ rewrite app_comm_cons. apply in_app_iff. simpl. left. left. symmetry. assumption.\n+ destruct H.\n* rewrite app_comm_cons. apply in_app_iff. simpl. left. right. assumption.\n* rewrite app_comm_cons. apply in_app_iff. simpl. right. left. symmetry. assumption.",
+            "intros. induction H. - rewrite app_nil_l; auto. - rewrite <- app_comm_cons. apply NoDup_cons. + intro. apply in_app_iff in H3. destruct H3; intuition. apply H1 in H3; try tauto; simpl; auto. + apply IHNoDup. unfold disjoint_lists; intros. apply H1 in H4; try tauto. simpl; auto."
+        ]
+    },
+    {
+        "lemma-name": "earlier_in_left",
+        "proof-shots": [
+            "intros l x y H.\nunfold earlier in H.\ndestruct H as [n [Hx _]].\napply firstn_in with (i:=n) in Hx.\nassumption.",
+            "intros. rewrite app_comm_cons. rewrite in_app_iff; simpl. intuition."
+        ]
+    },
+    {
+        "lemma-name": "earlier_in_right",
+        "proof-shots": [
+            "intros l x y H.\nunfold earlier in H.\ndestruct H as [n [_ Hy]].\napply skipn_in with (i:=n) in Hy.\nassumption.",
+            "intros. destruct H as [i]. destruct H. apply firstn_in in H; auto."
+        ]
+    },
+    {
+        "lemma-name": "earlier_left",
+        "proof-shots": [
+            "intros p q x y H.\nunfold earlier in *.\ndestruct H as [n [Hx Hy]].\nexists n.\nsplit.\n- apply in_or_app. left. assumption.\n- apply in_or_app. right. assumption.",
+            "intros p q x y H.\nunfold earlier in *.\ndestruct H as [n [Hx Hy]].\nexists n.\nsplit.\n- rewrite firstn_app. apply in_or_app. left. assumption.\n- rewrite skipn_app. apply in_or_app. right. assumption.",
+            "intros. destruct H as [i]. destruct H. apply skipn_in in H0; auto."
+        ]
+    },
+    {
+        "lemma-name": "earlier_right",
+        "proof-shots": [
+            "intros p q x y H.\nunfold earlier in *.\ndestruct H as [n [Hx Hy]].\nexists (length p + n).\nsplit.\n- rewrite firstn_app. rewrite firstn_all_n. rewrite app_nil_r. assumption. lia.\n- rewrite skipn_app. rewrite skipn_all. rewrite app_nil_r. assumption. lia."
+        ]
+    },
+    {
+        "lemma-name": "earlier_append",
+        "proof-shots": [
+            "intros p q x y Hx Hy.\nunfold earlier.\nexists (length p).\nsplit.\n- rewrite firstn_append. apply in_or_app. left. assumption.\n- rewrite skipn_append. apply in_or_app. right. assumption.",
+            "intros. destruct H as [i]. destruct H. exists (length p + i). assert (G: length p + i - length p = i). lia. split. - rewrite firstn_app. apply in_or_app. right. rewrite G; auto. - rewrite skipn_app. apply in_or_app. right. rewrite G; auto."
+        ]
+    },
+    {
+        "lemma-name": "earlier_append_iff",
+        "proof-shots": [
+            "intros x y l l'.\nunfold earlier.\nsplit; intros H.\n- destruct H as [n [Hx Hy]].\napply in_app_or in Hx. apply in_app_or in Hy.\ndestruct Hx as [Hx | Hx']; destruct Hy as [Hy | Hy'].\n+ left. exists n. split; assumption.\n+ right. left. split; assumption.\n+ right. left. split; assumption.\n+ right. right. exists (n - length l). split.\n* rewrite firstn_app. rewrite firstn_all_n. apply Hx'. lia.\n* rewrite skipn_app. rewrite skipn_all. apply Hy'. lia.\n- destruct H as [H | [[Hx Hy] | H]].\n+ destruct H as [n [Hx Hy]].\nexists n. split.\n* rewrite firstn_app. apply in_or_app. left. assumption.\n* rewrite skipn_app. apply in_or_app. left. assumption.\n+ destruct Hx as [Hx | Hx']; destruct Hy as [Hy | Hy'].\n* exists (length l). split.\n-- rewrite firstn_app. rewrite firstn_all_n. apply in_or_app. left. assumption. lia.\n-- rewrite skipn_app. rewrite skipn_all. apply in_or_app. right. assumption. lia.\n* exists (length l). split.\n-- rewrite firstn_app. rewrite firstn_all_n. apply in_or_app. left. assumption. lia.\n-- rewrite skipn_app. rewrite skipn_all. apply in_or_app. right. assumption. lia.\n* exists (length l + length l'). split.\n-- rewrite firstn_app. rewrite firstn_all_n. apply in_or_app. right. assumption. lia.\n-- rewrite skipn_app. rewrite skipn_all. apply in_or_app. left. assumption. lia.\n* exists (length l + (n - length l')). split.\n-- rewrite firstn_app. rewrite firstn_all_n. apply in_or_app. right. assumption. lia.\n-- rewrite skipn_app. rewrite skipn_all. apply in_or_app. right. assumption. lia.\n+ destruct H as [n [Hx Hy]].\nexists (length l + n). split.\n* rewrite firstn_app. rewrite firstn_all_n. apply in_or_app. right. assumption. lia.\n* rewrite skipn_app. rewrite skipn_all. apply in_or_app. left. assumption. lia.",
+            "intros x y l l'.\nsplit; intros H.\n- destruct H as [i [Hx Hy]].\napply in_app_or in Hx. apply in_app_or in Hy.\ndestruct Hx as [Hx | Hx']; destruct Hy as [Hy | Hy'].\n+ left. exists i. split; assumption.\n+ right. left. split; assumption.\n+ right. left. split; assumption.\n+ right. right. exists (i - length l). split.\n* rewrite firstn_app. rewrite firstn_all_n. apply in_or_app. right. assumption. lia.\n* rewrite skipn_app. rewrite skipn_all. apply in_or_app. right. assumption. lia.\n- destruct H as [H | [[Hx Hy] | H]].\n+ destruct H as [i [Hx Hy]].\nexists i. split.\n* rewrite firstn_app. apply in_or_app. left. assumption.\n* rewrite skipn_app. apply in_or_app. left. assumption.\n+ destruct Hx as [Hx | Hx']; destruct Hy as [Hy | Hy'].\n* exists (length l). split.\n-- rewrite firstn_app. rewrite firstn_all_n. apply in_or_app. left. assumption. lia.\n-- rewrite skipn_app. rewrite skipn_all. apply in_or_app. right. assumption. lia.\n* exists (length l). split.\n-- rewrite firstn_app. rewrite firstn_all_n. apply in_or_app. left. assumption. lia.\n-- rewrite skipn_app. rewrite skipn_all. apply in_or_app. right. assumption. lia.\n* exists (length l + length l'). split.\n-- rewrite firstn_app. rewrite firstn_all_n. apply in_or_app. right. assumption. lia.\n-- rewrite skipn_app. rewrite skipn_all. apply in_or_app. left. assumption. lia.\n* exists (length l + (i - length l')). split.\n-- rewrite firstn_app. rewrite firstn_all_n. apply in_or_app. right. assumption. lia.\n-- rewrite skipn_app. rewrite skipn_all. apply in_or_app. right. assumption. lia.\n+ destruct H as [i [Hx Hy]].\nexists (length l + i). split.\n* rewrite firstn_app. rewrite firstn_all_n. apply in_or_app. right. assumption. lia.\n* rewrite skipn_app. rewrite skipn_all. apply in_or_app. left. assumption. lia.",
+            "intros x y l l'.\nsplit; intros H.\n- unfold earlier in *.\ndestruct H as [i [Hx Hy]].\nrewrite firstn_app in Hx.\nrewrite skipn_app in Hy.\npose proof (le_lt_dec i (length l)) as G.\ndestruct G as [G|G].\n+ rewrite <- Nat.sub_0_le in G.\nrewrite G in *.\nsimpl in *.\nrewrite app_nil_r in *.\napply in_app_iff in Hx.\napply firstn_in in Hx.\nrewrite firstn_all_n in Hx.\nrewrite skipn_all_n in Hy.\napply in_app_iff in Hy.\ndestruct H as [H | [[Hx' Hy'] | H]].\n* left. exists i. split; assumption.\n* right. left. split; assumption.\n* right. left. split; assumption.\n* right. right. exists (i - length l). split; assumption.\n+ destruct H as [H | [[Hx Hy] | H]].\n* apply earlier_left. destruct H as [i [Hx Hy]].\napply earlier_append. exists i. split; assumption.\n* destruct Hx as [Hx | Hx']; destruct Hy as [Hy | Hy'].\n-- apply earlier_left. exists (length l). split.\n++ rewrite firstn_app. rewrite firstn_all_n. apply in_or_app. left. assumption. lia.\n++ rewrite skipn_app. rewrite skipn_all. apply in_or_app. right. assumption. lia.\n-- apply earlier_left. exists (length l). split.\n++ rewrite firstn_app. rewrite firstn_all_n. apply in_or_app. left. assumption. lia.\n++ rewrite skipn_app. rewrite skipn_all. apply in_or_app. right. assumption. lia.\n-- apply earlier_left. exists (length l + length l'). split.\n++ rewrite firstn_app. rewrite firstn_all_n. apply in_or_app. right. assumption. lia.\n++ rewrite skipn_app. rewrite skipn_all. apply in_or_app. left. assumption. lia.\n-- apply earlier_left. exists (length l + (i - length l')). split.\n++ rewrite firstn_app. rewrite firstn_all_n. apply in_or_app. right. assumption. lia.\n++ rewrite skipn_app. rewrite skipn_all. apply in_or_app. right. assumption. lia.\n* apply earlier_right. destruct H as [i [Hx Hy]].\napply earlier_append. exists (length l + i). split.\n-- rewrite firstn_app. rewrite firstn_all_n. apply in_or_app. right. assumption. lia.\n-- rewrite skipn_app. rewrite skipn_all. apply in_or_app. left. assumption. lia.\n- destruct H as [H | [[Hx Hy] | H]].\n+ destruct H as [i [Hx Hy]].\nexists i. split.\n* rewrite firstn_app. apply in_or_app. left. assumption.\n* rewrite skipn_app. apply in_or_app. left. assumption.\n+ destruct Hx as [Hx | Hx']; destruct Hy as [Hy | Hy'].\n* exists (length l). split.\n-- rewrite firstn_app. rewrite firstn_all_n. apply in_or_app. left. assumption. lia.\n-- rewrite skipn_app. rewrite skipn_all. apply in_or_app. right. assumption. lia.\n* exists (length l). split.\n-- rewrite firstn_app. rewrite firstn_all_n. apply in_or_app. left. assumption. lia.\n-- rewrite skipn_app. rewrite skipn_all. apply in_or_app. right. assumption. lia.\n* exists (length l + length l'). split.\n-- rewrite firstn_app. rewrite firstn_all_n. apply in_or_app. right. assumption. lia.\n-- rewrite skipn_app. rewrite skipn_all. apply in_or_app. left. assumption. lia.\n* exists (length l + (i - length l')). split.\n-- rewrite firstn_app. rewrite firstn_all_n. apply in_or_app. right. assumption. lia.\n-- rewrite skipn_app. rewrite skipn_all. apply in_or_app. right. assumption. lia.\n+ destruct H as [i [Hx Hy]].\nexists (length l + i). split.\n* rewrite firstn_app. rewrite firstn_all_n. apply in_or_app. right. assumption. lia.\n* rewrite skipn_app. rewrite skipn_all. apply in_or_app. left. assumption. lia."
+        ]
+    },
+    {
+        "lemma-name": "earlier_cons",
+        "proof-shots": [
+            "intros p x y H.\nunfold earlier.\nexists 1.\nsplit.\n- simpl. left. reflexivity.\n- simpl. assumption."
+        ]
+    }
+]

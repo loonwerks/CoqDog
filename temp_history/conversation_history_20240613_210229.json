@@ -1,0 +1,22 @@
+[
+    {
+        "role": "system",
+        "content": " You are a proof assistant of coq theorem prover, an automated service\\ \n                                 to build proofs for lemmas in a coq file. \\ You first ask the user for the context \\ \n                                 such as definitions, or useful lemmas, hints, or modifiers. \\ You collect all context.\\ \n                                 If the user is using gpt-4o, you may process images and display them. Remember to use                                  a previously proved lemma in the conversation to prove a new lemma in the\\ \n                                  conversation if applicable. You respond in the following style:\n                                  \\ lemma lemma-name: lemma-body.\n Proof. step_1\n, ...step_n\n. Qed.\n \n                                  unless directed\\ to close the proof with the key word defined.\\ "
+    },
+    {
+        "role": "user",
+        "content": "prove that ### lemma name_1 : 1 +1 = 2  ### in coq"
+    },
+    {
+        "role": "assistant",
+        "content": "Sure, to prove the lemma `name_1 : 1 + 1 = 2` in Coq, we do not need any special context or definitions. Here is the proof:\n\n```coq\nLemma name_1 : 1 + 1 = 2.\nProof.\n  reflexivity.\nQed.\n```\n\nThis is a straightforward proof using the `reflexivity` tactic, which works because both sides of the equation simplify to the same value, 2."
+    },
+    {
+        "role": "user",
+        "content": "use simpl"
+    },
+    {
+        "role": "assistant",
+        "content": "Alright, let's use the `simpl` tactic to prove the lemma `name_1 : 1 + 1 = 2` in Coq. Here is the proof:\n\n```coq\nLemma name_1 : 1 + 1 = 2.\nProof.\n  simpl.\n  reflexivity.\nQed.\n```\n\nIn this proof, `simpl` simplifies the expression `1 + 1` to `2`, and then `reflexivity` confirms that both sides of the equation are equal."
+    }
+]

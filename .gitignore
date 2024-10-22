@@ -1,0 +1,12 @@
+venv/
+__pycache__/
+*.pyc
+.env
+.DS_Store
+copland-src-compiled_1/
+src/
+src.zip
+uploaded_dir/
+assets/coqdog_recomsys_using_embeddings-3.py
+assets/coqdog_recomsys_using_embeddings.py
+assets/recommendation_using_embeddings.py

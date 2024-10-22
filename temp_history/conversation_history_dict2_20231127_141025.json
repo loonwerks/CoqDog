@@ -1,0 +1,85 @@
+[
+    {
+        "lemma-name": "monad_left_id",
+        "proof-shots": [
+            "intros S A B a f s.\n  unfold bind, ret.\n  simpl.\n  destruct (f a s) as [b s'].\n  reflexivity."
+        ]
+    },
+    {
+        "lemma-name": "monad_right_id",
+        "proof-shots": [
+            "intros S A m s.\n  unfold bind, ret.\n  destruct (m s) as [[a s'] | [None s']].\n  - simpl. reflexivity.\n  - simpl. reflexivity.",
+            "intros S A m s.\n  unfold bind, ret.\n  destruct (m s) as [o s']. destruct o. \n  - simpl. reflexivity.\n  - simpl. reflexivity."
+        ]
+    },
+    {
+        "lemma-name": "monad_right_id' {S A",
+        "proof-shots": [
+            "intros.\n  unfold bind, ret.\n  destruct (m s) as [o s'].\n  destruct o.\n  - simpl. reflexivity.\n  - simpl. reflexivity."
+        ]
+    },
+    {
+        "lemma-name": "monad_right_id'' {S",
+        "proof-shots": [
+            "intros.\n  unfold bind, ret.\n  destruct (m s) as [o s'].\n  destruct o.\n  - simpl. reflexivity.\n  - simpl. reflexivity.",
+            "intros.\n  unfold bind, ret.\n  destruct (m s) as [o s'].\n  destruct o.\n  - simpl. destruct u. reflexivity.\n  - simpl. reflexivity."
+        ]
+    },
+    {
+        "lemma-name": "monad_comp {S A B C",
+        "proof-shots": [
+            "intros.\n  unfold bind.\n  destruct (m s) as [o s'].\n  destruct o.\n  - simpl. destruct (k a s') as [o' s''].\n    destruct o'.\n    + simpl. reflexivity.\n    + simpl. reflexivity.\n  - simpl. reflexivity.",
+            "intros.\n  unfold bind.\n  destruct (m s) as [o s'].\n  destruct o.\n  - simpl. destruct (k a s') as [o' s''].\n    destruct o'.\n    + simpl. destruct (h b s''). reflexivity.\n    + simpl. reflexivity.\n  - simpl. reflexivity."
+        ]
+    },
+    {
+        "lemma-name": "monad_get_get {S A",
+        "proof-shots": [
+            "intros.\n  unfold bind, get.\n  simpl.\n  destruct (k st) as [o s'].\n  reflexivity."
+        ]
+    },
+    {
+        "lemma-name": "monad_get_put {A",
+        "proof-shots": [
+            "intros.\n  unfold bind, get, put, ret.\n  simpl.\n  reflexivity."
+        ]
+    },
+    {
+        "lemma-name": "monad_put_put {S",
+        "proof-shots": [
+            "intros.\n  unfold bind, put.\n  simpl.\n  reflexivity."
+        ]
+    },
+    {
+        "lemma-name": "monad_put_get {S A",
+        "proof-shots": [
+            "intros.\n  unfold bind, put, get.\n  simpl.\n  destruct (k s) as [o s'].\n  reflexivity."
+        ]
+    },
+    {
+        "lemma-name": "gasd {A B",
+        "proof-shots": [
+            "intros.\n  unfold bind, ret.\n  destruct (act st) as [o s'].\n  destruct o.\n  - simpl. reflexivity.\n  - simpl. reflexivity.",
+            "intros.\n  unfold bind, ret.\n  destruct (act st) as [o s'].\n  destruct o.\n  - simpl. destruct (act2 s'). reflexivity.\n  - simpl. reflexivity."
+        ]
+    },
+    {
+        "lemma-name": "fafa {A B",
+        "proof-shots": [
+            "intros.\n  rewrite gasd.\n  reflexivity.",
+            "intros.\n  unfold bind, ret.\n  destruct (act st) as [o s'].\n  destruct o.\n  - simpl. destruct (act2 s') as [o2 s2']. destruct (act3 s2'). reflexivity.\n  - simpl. destruct (act3 s'). reflexivity."
+        ]
+    },
+    {
+        "lemma-name": "hlhl {A B",
+        "proof-shots": [
+            "intros.\n  unfold bind.\n  destruct (act st) as [o s'].\n  destruct o.\n  - simpl. destruct (act2 s') as [o2 s2']. \n    destruct o2. \n    + simpl. destruct (act3 s2') as [o3 s3']. \n      destruct o3.\n      * simpl. destruct (act4 s3'). reflexivity.\n      * simpl. reflexivity.\n    + simpl. reflexivity.\n  - simpl. reflexivity."
+        ]
+    },
+    {
+        "lemma-name": "hghg {A B",
+        "proof-shots": [
+            "intros.\n  rewrite monad_comp.\n  reflexivity."
+        ]
+    }
+]
