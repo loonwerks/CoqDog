@@ -26,6 +26,9 @@ proof repair across multiple samples, as seen in Figure 4 (AISOLA2024). from the
 Coq proofbase, which consists of a total of 21,000 lines of Coq code.
 
 ## Video Demo
+
+Click the thumbnail image to watch the video demo:
+
 [![Watch the video](https://img.youtube.com/vi/dSQY-Tf28QE/maxresdefault.jpg)](https://youtu.be/dSQY-Tf28QE)
 
 ## Installation
