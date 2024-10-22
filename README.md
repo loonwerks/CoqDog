@@ -25,6 +25,9 @@ mechanism to prevent logically unsound recommendations.
 proof repair across multiple samples, as seen in Figure 4 (AISOLA2024). from the Copland
 Coq proofbase, which consists of a total of 21,000 lines of Coq code.
 
+## Video Demo
+[![Watch the video](https://img.youtube.com/vi/dSQY-Tf28QE/hqdefault.jpg)](https://youtu.be/dSQY-Tf28QE)
+
 ## Installation
 
 Follow these steps to set up the project:
@@ -69,8 +72,4 @@ Make sure you have the following installed:
 5. **Run CoqDog Team Application**
    ```bash
      python3.9 CoqDog_Team.py
-
-### Video Demo
-[![Watch the video](https://img.youtube.com/vi/dSQY-Tf28QE/hqdefault.jpg)](https://youtu.be/dSQY-Tf28QE)
- 
      
