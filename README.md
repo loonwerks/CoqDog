@@ -24,3 +24,39 @@ mechanism to prevent logically unsound recommendations.
 2. We present a comprehensive evaluation of CoqDog Copilot’s performance in
 proof repair across multiple samples, as seen in Figure 4 (AISOLA2024). from the Copland
 Coq proofbase, which consists of a total of 21,000 lines of Coq code.
+
+## Installation
+
+Follow these steps to set up the project:
+
+### Prerequisites
+
+Make sure you have the following installed:
+
+- Python 3.9.7 for ubuntu 20.04 and 3.8 for ubuntu 18.04
+- `pip` (Python package installer)
+
+### Installation Steps
+
+1. **Clone the Repository**:
+   
+   Clone the project from GitHub to your local machine.
+
+  ```bash
+   git clone https://github.com/loonwerks/CoqDog.git
+   cd CoqDog
+   
+2. **Set Up a Virtual Environment**
+  ```bash 
+   python3 -m venv venv
+   source venv/bin/activate
+   
+3. **Set Up Environment Variables** 
+   ```bash
+   Open your `.env` file and add the following line and save file after that. 
+   Be sure to replace `your-openai-api-key` with your actual key:
+   
+   OPENAI_API_KEY="your-openai-api-key"
+   
+4.   
+     
