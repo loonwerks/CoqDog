@@ -81,6 +81,8 @@ Make sure you have the following installed:
 
 ## Contacts
 
+If you have any questions or want to contribute, feel free to contact:
+
 ### At Collins Aerospace:
 
 | Name           | Contact      |
