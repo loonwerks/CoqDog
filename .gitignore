@@ -6,6 +6,7 @@ __pycache__/
 copland-src-compiled_1/
 temp_history/
 conversation_history/
+.idea/
 src/
 src.zip
 uploaded_dir/
