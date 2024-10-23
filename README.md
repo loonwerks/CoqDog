@@ -85,14 +85,18 @@ Make sure you have the following installed:
 
 ## Contacts
 
-If you have any questions or want to contribute, feel free to contact:
-
 ### At Collins Aerospace:
-- Amer Tahat: [![Email](https://img.shields.io/badge/Email-Contact-blue)](mailto:amer.tahat@collins.com)
-- David Hardin: [![Email](https://img.shields.io/badge/Email-Contact-blue)](mailto:david.hardin@collins.com)
-- [Isaac Amundson](mailto:isaac.amundson@collins.com)
-- [Karl Hoech](mailto:Karl.Hoech@collins.com)
+
+| Name           | Contact      |
+|----------------|--------------|
+| Amer Tahat     | [![Email](https://img.shields.io/badge/Email-Contact-blue)](mailto:amer.tahat@collins.com) |
+| David Hardin   | [![Email](https://img.shields.io/badge/Email-Contact-blue)](mailto:david.hardin@collins.com) |
+| Isaac Amundson | [![Email](https://img.shields.io/badge/Email-Contact-blue)](mailto:isaac.amundson@collins.com) |
+| Karl Hoech     | [![Email](https://img.shields.io/badge/Email-Contact-blue)](mailto:Karl.Hoech@collins.com) |
 
 ### At KU:
-- [Adam Petz](mailto:ampetz@ku.edu)
-- [Perry Alexander](mailto:palexand@ku.edu)     
+
+| Name           | Contact      |
+|----------------|--------------|
+| Adam Petz    | [![Email](https://img.shields.io/badge/Email-Contact-blue)](mailto:ampetz@ku.edu) |
+| Perry Alexander| [![Email](https://img.shields.io/badge/Email-Contact-blue)](mailto:palexand@ku.edu)    
