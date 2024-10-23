@@ -3,14 +3,14 @@
 ## Contacts
 
 ### At Collins Aerospace:
-- Amer Tahat: [![Email](https://img.shields.io/badge/Email-Contact-blue)](mailto:amer.tahat@collins.com)
-- David Hardin: [![Email](https://img.shields.io/badge/Email-Contact-blue)](mailto:david.hardin@collins.com)
-- Isaac Amundson: [![Email](https://img.shields.io/badge/Email-Contact-blue)](mailto:isaac.amundson@collins.com)
-- Karl Hoech: [![Email](https://img.shields.io/badge/Email-Contact-blue)](mailto:Karl.Hoech@collins.com)
+- [Amer Tahat](mailto:amer.tahat@collins.com)
+- [David Hardin](mailto:david.hardin@collins.com)
+- [Isaac Amundson](mailto:isaac.amundson@collins.com)
+- [Karl Hoech](mailto:Karl.Hoech@collins.com)
 
 ### At KU:
-- Andrew Petz: [![Email](https://img.shields.io/badge/Email-Contact-blue)](mailto:ampetz@ku.edu)
-- Perry Alexander: [![Email](https://img.shields.io/badge/Email-Contact-blue)](mailto:palexand@ku.edu)
+- [Andrew Petz](mailto:ampetz@ku.edu)
+- [Perry Alexander](mailto:palexand@ku.edu)
 
 We introduce CoqDog Copilot, which leverages the neuro-symbolic interplay between generative AI and the Coq theorem 
 prover to form a productive "generate-and-test" loop, incrementally improving proofs based on failure information and 
