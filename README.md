@@ -51,39 +51,45 @@ Make sure you have the following installed:
   ```bash
    git clone https://github.com/loonwerks/CoqDog.git
    cd CoqDog
+  ```
    
 2. **Set Up a Virtual Environment**
   ```bash 
    python3.9 -m venv venv
    source venv/bin/activate
+   ```
    
 3. **Install Dependencies**
    ```bash
    pip3.9 install -r requirements.txt
+   ```
 
 4. **Set Up Environment Variables** 
    Open your `.env` file 
    ```bash
    gedit .env
+   ```
    
    add the following line and save file after that. 
-    
+   ```bash  
    OPENAI_API_KEY="your-openai-api-key"
-    
+   ``` 
    be sure to replace `your-openai-api-key` with your actual key.
     
 5. **Run CoqDog Team Application**
    ```bash
      python3.9 CoqDog_Team.py
-     
+   ```
+
+<!-- this blank line separates the sections -->
 
 ## Contacts
 
 If you have any questions or want to contribute, feel free to contact:
 
 ### At Collins Aerospace:
-- [Amer Tahat](mailto:amer.tahat@collins.com)
-- [David Hardin](mailto:david.hardin@collins.com)
+- Amer Tahat: [![Email](https://img.shields.io/badge/Email-Contact-blue)](mailto:amer.tahat@collins.com)
+- David Hardin: [![Email](https://img.shields.io/badge/Email-Contact-blue)](mailto:david.hardin@collins.com)
 - [Isaac Amundson](mailto:isaac.amundson@collins.com)
 - [Karl Hoech](mailto:Karl.Hoech@collins.com)
 
