@@ -5,6 +5,7 @@ __pycache__/
 .DS_Store
 copland-src-compiled_1/
 temp_history/
+conversation_history/
 src/
 src.zip
 uploaded_dir/
