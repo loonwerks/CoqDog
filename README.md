@@ -1,17 +1,5 @@
 # CoqDog Copilot: a user-friendly AI- assistant for coq proof assistant - with a case study on Copland attestation protocols
 
-## Contacts
-
-### At Collins Aerospace:
-- [Amer Tahat](mailto:amer.tahat@collins.com)
-- [David Hardin](mailto:david.hardin@collins.com)
-- [Isaac Amundson](mailto:isaac.amundson@collins.com)
-- [Karl Hoech](mailto:Karl.Hoech@collins.com)
-
-### At KU:
-- [Andrew Petz](mailto:ampetz@ku.edu)
-- [Perry Alexander](mailto:palexand@ku.edu)
-
 We introduce CoqDog Copilot, which leverages the neuro-symbolic interplay between generative AI and the Coq theorem 
 prover to form a productive "generate-and-test" loop, incrementally improving proofs based on failure information and 
 human hints until valid proofs are achieved. 
@@ -88,3 +76,14 @@ Make sure you have the following installed:
    ```bash
      python3.9 CoqDog_Team.py
      
+## Contacts
+
+### At Collins Aerospace:
+- [Amer Tahat](mailto:amer.tahat@collins.com)
+- [David Hardin](mailto:david.hardin@collins.com)
+- [Isaac Amundson](mailto:isaac.amundson@collins.com)
+- [Karl Hoech](mailto:Karl.Hoech@collins.com)
+
+### At KU:
+- [Adam Petz](mailto:ampetz@ku.edu)
+- [Perry Alexander](mailto:palexand@ku.edu)     
