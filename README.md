@@ -76,7 +76,10 @@ Make sure you have the following installed:
    ```bash
      python3.9 CoqDog_Team.py
      
+
 ## Contacts
+
+If you have any questions or want to contribute, feel free to contact:
 
 ### At Collins Aerospace:
 - [Amer Tahat](mailto:amer.tahat@collins.com)
